@@ -1,0 +1,1912 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>দাওয়াতী রিপোর্ট ব্যবস্থাপনা সিস্টেম</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Cdefs%3E%3ClinearGradient%20id='g'%20x1='0'%20y1='0'%20x2='1'%20y2='1'%3E%3Cstop%20offset='0'%20stop-color='%233fc4ab'/%3E%3Cstop%20offset='1'%20stop-color='%23138a78'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect%20width='64'%20height='64'%20rx='14'%20fill='url%28%23g%29'/%3E%3Cg%20transform='translate%2814,14%29%20scale%281.5%29'%20fill='none'%20stroke='white'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M3%2021h18'/%3E%3Cpath%20d='M5%2021V7l7-4%207%204v14'/%3E%3Cpath%20d='M9%2021v-6h6v6'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Baloo+Da+2:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --teal-950:#04211f;
+  --teal-900:#06302c;
+  --teal-800:#0a4a42;
+  --teal-700:#0f6b5f;
+  --teal-600:#138a78;
+  --teal-500:#17a68f;
+  --teal-400:#3fc4ab;
+  --teal-300:#7edcc7;
+  --teal-100:#e3f7f2;
+  --teal-50:#f2fbf9;
+  --sand:#fbf8f1;
+  --sand-line:#e7e0cf;
+  --clay:#d97757; /* used sparingly only, avoided per brief teal focus */
+  --ink:#0c2320;
+  --ink-soft:#4a615d;
+  --gold:#c9a24b;
+  --danger:#c0463a;
+  --white:#ffffff;
+  --radius:14px;
+  --shadow-sm:0 1px 2px rgba(6,48,44,.06), 0 1px 1px rgba(6,48,44,.04);
+  --shadow-md:0 8px 24px -8px rgba(6,48,44,.18);
+  --shadow-lg:0 24px 48px -16px rgba(6,48,44,.28);
+  font-size:16px;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:'Hind Siliguri', sans-serif;
+  background:var(--sand);
+  color:var(--ink);
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4,.display{
+  font-family:'Baloo Da 2', 'Hind Siliguri', sans-serif;
+}
+::selection{background:var(--teal-300);color:var(--teal-950);}
+button{font-family:inherit;}
+input,select{font-family:inherit;}
+
+/* ---------- scrollbar ---------- */
+::-webkit-scrollbar{width:10px;height:10px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--teal-300);border-radius:8px;}
+
+/* ================= LOGIN SCREEN ================= */
+#loginScreen{
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:
+    radial-gradient(1200px 600px at 15% -10%, var(--teal-800) 0%, transparent 60%),
+    radial-gradient(900px 500px at 110% 110%, var(--teal-700) 0%, transparent 55%),
+    linear-gradient(160deg, var(--teal-950), var(--teal-900) 55%, var(--teal-800));
+  padding:24px;
+  position:relative;
+  overflow:hidden;
+}
+#loginScreen::before{
+  content:"";
+  position:absolute;inset:0;
+  background-image:
+    repeating-linear-gradient(115deg, rgba(255,255,255,.035) 0px, rgba(255,255,255,.035) 1px, transparent 1px, transparent 64px);
+  pointer-events:none;
+}
+.login-card{
+  position:relative;
+  width:100%;
+  max-width:420px;
+  background:var(--white);
+  border-radius:20px;
+  box-shadow:var(--shadow-lg);
+  padding:40px 36px 32px;
+  animation:riseIn .6s cubic-bezier(.16,1,.3,1);
+}
+@keyframes riseIn{from{opacity:0;transform:translateY(18px);}to{opacity:1;transform:translateY(0);}}
+.login-mark{
+  width:56px;height:56px;border-radius:14px;
+  background:linear-gradient(135deg,var(--teal-500),var(--teal-700));
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 18px;
+  box-shadow:0 10px 24px -8px rgba(19,138,120,.55);
+}
+.login-mark svg{width:28px;height:28px;stroke:white;}
+.login-card h1{
+  text-align:center;font-size:22px;font-weight:700;color:var(--teal-900);margin:0 0 4px;
+}
+.login-card .sub{
+  text-align:center;color:var(--ink-soft);font-size:14px;margin:0 0 28px;
+}
+.tab-switch{
+  display:flex;background:var(--teal-100);border-radius:12px;padding:4px;margin-bottom:24px;
+}
+.tab-switch button{
+  flex:1;border:none;background:transparent;padding:10px 8px;border-radius:9px;
+  font-weight:600;color:var(--teal-700);cursor:pointer;font-size:14px;transition:.2s;
+}
+.tab-switch button.active{background:var(--white);color:var(--teal-900);box-shadow:var(--shadow-sm);}
+.field{margin-bottom:16px;}
+.field label{display:block;font-size:13px;font-weight:600;color:var(--ink-soft);margin-bottom:6px;}
+.field input,.field select{
+  width:100%;padding:12px 14px;border:1.5px solid var(--sand-line);border-radius:10px;
+  font-size:15px;color:var(--ink);background:var(--sand);transition:.15s;outline:none;
+}
+.field input:focus,.field select:focus{border-color:var(--teal-500);background:var(--white);box-shadow:0 0 0 3px rgba(23,166,143,.15);}
+.field input[readonly]{background:#eef3f2;color:var(--ink-soft);cursor:not-allowed;font-weight:600;}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  border:none;border-radius:10px;padding:12px 20px;font-weight:600;font-size:15px;
+  cursor:pointer;transition:.15s;
+}
+.btn-primary{background:var(--teal-600);color:white;box-shadow:0 6px 16px -6px rgba(19,138,120,.6);}
+.btn-primary:hover{background:var(--teal-700);}
+.btn-block{width:100%;}
+.login-error{
+  background:#fdeceb;color:var(--danger);padding:10px 14px;border-radius:10px;font-size:13.5px;
+  margin-bottom:16px;display:none;border:1px solid #f4cdc9;
+}
+.login-hint{margin-top:18px;text-align:center;font-size:12.5px;color:#9aa8a5;}
+#loginMainBranchHint{font-size:16px;font-weight:700;color:var(--teal-700);}
+
+/* ================= APP SHELL (TOP MENUBAR) ================= */
+#app{display:none;min-height:100vh;}
+.shell{display:flex;flex-direction:column;min-height:100vh;}
+
+.topheader{
+  background:linear-gradient(185deg,var(--teal-950),var(--teal-900));
+  color:var(--teal-100);
+  position:sticky;top:0;z-index:50;
+  box-shadow:0 4px 18px -6px rgba(4,33,31,.35);
+}
+.topheader-row{
+  display:grid;grid-template-columns:1fr auto 1fr;align-items:center;
+  padding:12px 24px;gap:16px;
+}
+.brand{display:flex;align-items:center;gap:10px;flex-shrink:0;justify-self:start;}
+.brand-mark{
+  width:36px;height:36px;border-radius:10px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--teal-400),var(--teal-600));
+  display:flex;align-items:center;justify-content:center;
+}
+.brand-mark svg{width:19px;height:19px;stroke:white;}
+.brand-text{line-height:1.2;}
+.brand-text b{display:block;font-size:14.5px;font-weight:700;color:white;}
+.brand-text span{font-size:11px;color:var(--teal-300);}
+
+/* desktop menubar */
+.nav{
+  display:flex;align-items:center;gap:4px;flex-wrap:wrap;justify-self:center;
+  position:relative;
+}
+.nav-item{
+  display:flex;align-items:center;gap:8px;padding:9px 13px;border-radius:9px;
+  color:var(--teal-100);text-decoration:none;font-size:13.5px;font-weight:500;
+  cursor:pointer;transition:.15s;border:none;background:transparent;white-space:nowrap;
+}
+.nav-item svg{width:17px;height:17px;stroke:currentColor;flex-shrink:0;opacity:.85;}
+.nav-item:hover{background:rgba(255,255,255,.08);}
+.nav-item.active{background:var(--teal-500);color:white;box-shadow:0 4px 14px -4px rgba(23,166,143,.6);}
+.nav-item.active svg{opacity:1;}
+
+/* admin dropdown (desktop) */
+.nav-dropdown{position:relative;}
+.nav-dropdown-menu{
+  display:none;position:absolute;top:calc(100% + 6px);right:0;min-width:200px;
+  background:var(--white);border-radius:12px;box-shadow:var(--shadow-lg);
+  border:1px solid var(--sand-line);padding:6px;z-index:60;
+}
+.nav-dropdown-menu.open{display:block;}
+.nav-dropdown-menu .nav-item{
+  color:var(--teal-800);width:100%;justify-content:flex-start;padding:10px 12px;
+}
+.nav-dropdown-menu .nav-item:hover{background:var(--teal-50);}
+.nav-dropdown-menu .nav-item.active{background:var(--teal-500);color:white;}
+.nav-dropdown-caret{width:13px;height:13px;stroke:currentColor;transition:transform .15s;margin-right:-2px;}
+.nav-dropdown.open .nav-dropdown-caret{transform:rotate(180deg);}
+
+.user-chip{display:flex;align-items:center;gap:10px;flex-shrink:0;justify-self:end;}
+.user-avatar{width:32px;height:32px;border-radius:50%;background:var(--teal-600);display:flex;align-items:center;justify-content:center;font-weight:700;color:white;font-size:13px;flex-shrink:0;}
+.user-info{line-height:1.25;overflow:hidden;display:none;}
+.user-info b{display:block;font-size:12.5px;color:white;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px;}
+.user-info span{font-size:11px;color:var(--teal-300);}
+.logout-btn{
+  padding:8px 14px;border-radius:9px;border:1px solid rgba(255,255,255,.18);
+  background:transparent;color:var(--teal-200,#c8ece3);font-size:13px;font-weight:600;cursor:pointer;
+  flex-shrink:0;white-space:nowrap;
+}
+.logout-btn:hover{background:rgba(255,255,255,.08);}
+
+.hamburger{display:none;background:none;border:none;cursor:pointer;padding:8px;flex-shrink:0;}
+.hamburger svg{width:22px;height:22px;stroke:white;}
+
+/* mobile drawer nav */
+.mobile-nav-drawer{
+  display:none;
+  flex-direction:column;gap:2px;
+  padding:10px 12px 16px;
+  border-top:1px solid rgba(255,255,255,.1);
+  background:var(--teal-950);
+}
+.mobile-nav-drawer.open{display:flex;}
+.mobile-nav-drawer .nav-item{width:100%;justify-content:flex-start;text-align:right;padding:11px 14px;}
+.mobile-nav-drawer .nav-dropdown-menu{
+  display:none;position:static;box-shadow:none;border:none;background:rgba(255,255,255,.04);
+  margin:2px 0 4px;padding:2px;border-radius:9px;
+}
+.mobile-nav-drawer .nav-dropdown-menu.open{display:block;}
+.mobile-nav-drawer .nav-dropdown-menu .nav-item{color:var(--teal-100);}
+.mobile-nav-drawer .nav-dropdown-menu .nav-item:hover{background:rgba(255,255,255,.08);}
+.mobile-nav-drawer .nav-dropdown-menu .nav-item.active{background:var(--teal-500);color:white;}
+
+.main{flex:1;min-width:0;display:flex;flex-direction:column;}
+.pagehead{
+  min-height:56px;flex-shrink:0;background:var(--white);border-bottom:1px solid var(--sand-line);
+  display:flex;align-items:center;justify-content:space-between;padding:10px 28px;gap:14px;flex-wrap:wrap;
+}
+.pagehead h2{font-size:17px;margin:0;color:var(--teal-900);font-weight:700;}
+.pagehead-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.pagehead-actions label{font-size:12.5px;font-weight:600;color:var(--ink-soft);white-space:nowrap;}
+.pagehead-actions select{
+  padding:8px 12px;border-radius:9px;border:1.5px solid var(--sand-line);
+  font-size:13.5px;min-width:190px;max-width:260px;background:var(--sand);color:var(--ink);
+}
+.icon-btn{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:36px;height:36px;border-radius:9px;border:1.5px solid var(--sand-line);
+  background:var(--sand);color:var(--teal-700);cursor:pointer;flex-shrink:0;
+  transition:.15s;padding:0;
+}
+.icon-btn:hover{background:var(--teal-100);border-color:var(--teal-300);}
+.icon-btn:active{transform:scale(.94);}
+.icon-btn svg{width:18px;height:18px;stroke:currentColor;}
+.icon-btn.spinning svg{animation:iconSpin .7s linear infinite;}
+.icon-btn:disabled{opacity:.6;cursor:not-allowed;}
+@keyframes iconSpin{to{transform:rotate(360deg);}}
+.content{padding:26px 28px 60px;flex:1;}
+
+.footer-bar{
+  text-align:center;padding:16px;font-size:12.5px;color:var(--ink-soft);
+  border-top:1px solid var(--sand-line);background:var(--white);
+}
+.footer-bar b{color:var(--teal-700);}
+
+/* ================= CARDS / WIDGETS ================= */
+.grid-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-bottom:24px;}
+.stat-card{
+  background:var(--white);border-radius:var(--radius);padding:18px 18px 16px;
+  border:1px solid var(--sand-line);box-shadow:var(--shadow-sm);position:relative;overflow:hidden;
+}
+.stat-card::before{
+  content:"";position:absolute;top:0;left:0;width:4px;height:100%;background:var(--teal-500);
+}
+.stat-card .label{font-size:12.5px;color:var(--ink-soft);font-weight:600;margin-bottom:8px;}
+.stat-card .value{font-size:26px;font-weight:800;color:var(--teal-900);font-family:'Baloo Da 2',sans-serif;}
+.stat-card.accent-gold::before{background:var(--gold);}
+.stat-card.accent-red::before{background:var(--danger);}
+.stat-card.accent-red .value{color:var(--danger);}
+
+.section-header{
+  display:flex;align-items:center;justify-content:space-between;margin:28px 0 14px;flex-wrap:wrap;gap:10px;
+}
+.section-header h3{margin:0;font-size:16.5px;color:var(--teal-900);font-weight:700;}
+.section-header .eyebrow{font-size:11.5px;font-weight:700;letter-spacing:.05em;color:var(--teal-500);text-transform:uppercase;display:block;margin-bottom:2px;}
+
+.panel{
+  background:var(--white);border:1px solid var(--sand-line);border-radius:var(--radius);
+  box-shadow:var(--shadow-sm);padding:22px;margin-bottom:20px;
+}
+.info-header{
+  background:linear-gradient(120deg,var(--teal-800),var(--teal-600));
+  padding:12px 28px;color:white;
+  display:flex;flex-wrap:wrap;gap:22px;justify-content:center;align-items:center;
+  box-shadow:var(--shadow-md);
+}
+.info-header .ih-meta{display:flex;gap:28px;flex-wrap:wrap;justify-content:center;}
+.ih-meta div{text-align:center;}
+.ih-meta .k{font-size:11px;color:var(--teal-200,#bfe9de);opacity:.85;}
+.ih-meta .v{font-size:14.5px;font-weight:700;}
+
+table.data-table{width:100%;border-collapse:collapse;font-size:14px;}
+table.data-table thead th{
+  background:var(--teal-50);color:var(--teal-800);text-align:right;padding:11px 12px;
+  font-weight:700;font-size:12.5px;border-bottom:2px solid var(--teal-200,#bcecdf);white-space:nowrap;
+}
+table.data-table tbody td{padding:11px 12px;border-bottom:1px solid var(--sand-line);color:var(--ink);}
+table.data-table tbody tr:hover{background:var(--teal-50);}
+table.data-table tbody tr:last-child td{border-bottom:none;}
+.table-scroll{overflow-x:auto;border-radius:10px;border:1px solid var(--sand-line);}
+.table-scroll table{border:none;}
+
+/* কর্মসূচী তালিকা টেবিল: হেডার ও ডাটা সেন্টার, শুধু নাম কলাম বামে */
+table.programs-table thead th{text-align:center;}
+table.programs-table thead th:first-child{text-align:left;}
+table.programs-table tbody td{text-align:center;}
+table.programs-table tbody td:first-child{text-align:left;}
+
+/* ড্যাশবোর্ড শাখা ভিত্তিক তালিকা: হেডার ও ডাটা সেন্টার, শুধু শাখার নাম বামে */
+table.branchwise-table thead th{text-align:center;}
+table.branchwise-table thead th:first-child{text-align:left;}
+table.branchwise-table tbody td{text-align:center;}
+table.branchwise-table tbody td:first-child{text-align:left;}
+
+/* রিপোর্ট প্রিন্ট টেবিল: হেডার ও সব ডাটা সেন্টার (কোনো ব্যতিক্রম নেই) */
+table.report-print-table thead th{text-align:center;}
+table.report-print-table tbody td{text-align:center;}
+
+/* সাম্প্রতিক রিপোর্টসমূহ তালিকা: হেডার ও ডাটা সেন্টার, শুধু শাখা কলাম বামে */
+table.recent-reports-table thead th{text-align:center;}
+table.recent-reports-table tbody td{text-align:center;}
+table.recent-reports-table tbody td.branch-col{text-align:left;}
+
+.badge{display:inline-block;padding:3px 10px;border-radius:999px;font-size:11.5px;font-weight:700;}
+.badge-teal{background:var(--teal-100);color:var(--teal-700);}
+.badge-gold{background:#fbf1dc;color:#9a7a20;}
+
+/* ---------- অফিস স্টাইল প্রিন্ট রিপোর্ট ---------- */
+.print-report-header{text-align:center;margin-bottom:10px;}
+.print-report-header h2{margin:0 0 2px;font-size:19px;color:var(--teal-900);font-weight:700;}
+.print-report-header p.addr{margin:0;font-size:13px;color:var(--ink-soft);}
+.print-report-meta{
+  display:flex;justify-content:center;flex-wrap:wrap;column-gap:28px;row-gap:4px;
+  font-size:13.5px;color:var(--ink);
+  border-top:1.5px solid var(--teal-700);border-bottom:1.5px solid var(--teal-700);
+  padding:9px 4px;margin-bottom:18px;
+}
+.print-report-meta div b{color:var(--teal-800);}
+.data-table tbody tr.total-row td{background:var(--teal-100);font-weight:700;color:var(--teal-900);border-top:1.5px solid var(--teal-400);}
+.data-table tbody tr.total-row:hover{background:var(--teal-100);}
+
+/* ================= FORMS ================= */
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px;}
+.form-actions{display:flex;gap:10px;margin-top:20px;justify-content:flex-start;}
+.btn-secondary{background:var(--teal-100);color:var(--teal-800);}
+.btn-secondary:hover{background:#d4f0e9;}
+.btn-danger{background:#fdeceb;color:var(--danger);}
+.btn-danger:hover{background:#fadcda;}
+.btn-outline{background:transparent;border:1.5px solid var(--teal-500);color:var(--teal-700);}
+.btn-outline:hover{background:var(--teal-50);}
+.btn-sm{padding:7px 13px;font-size:13px;border-radius:8px;}
+
+.multiselect-box{
+  border:1.5px solid var(--sand-line);border-radius:10px;padding:10px;max-height:180px;
+  overflow-y:auto;background:var(--sand);
+}
+.ms-item{display:flex;align-items:center;gap:8px;padding:6px 4px;font-size:14px;}
+.ms-item input{width:16px;height:16px;accent-color:var(--teal-600);}
+
+.toggle-panel{max-height:0;overflow:hidden;transition:max-height .3s ease;}
+.toggle-panel.open{max-height:900px;}
+
+.empty-state{
+  text-align:center;padding:50px 20px;color:var(--ink-soft);
+}
+.empty-state svg{width:52px;height:52px;stroke:var(--teal-300);margin-bottom:14px;}
+.empty-state p{margin:0;font-size:14.5px;}
+
+.toast{
+  position:fixed;bottom:24px;left:24px;background:var(--teal-800);color:white;padding:13px 20px;
+  border-radius:12px;box-shadow:var(--shadow-lg);font-size:14px;font-weight:600;z-index:200;
+  display:flex;align-items:center;gap:10px;animation:toastIn .3s cubic-bezier(.16,1,.3,1);
+}
+.toast.error{background:var(--danger);}
+@keyframes toastIn{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+
+.spinner{width:16px;height:16px;border:2.5px solid rgba(255,255,255,.3);border-top-color:white;border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading-overlay{
+  position:fixed;inset:0;background:rgba(4,33,31,.35);backdrop-filter:blur(1px);
+  display:flex;align-items:center;justify-content:center;z-index:300;
+}
+.loading-box{background:white;padding:18px 26px;border-radius:14px;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow-lg);}
+.loading-box .spinner{border-color:rgba(19,138,120,.2);border-top-color:var(--teal-600);width:20px;height:20px;}
+.loading-box span{font-weight:600;color:var(--teal-800);font-size:14.5px;}
+
+.list-tag{
+  display:inline-flex;align-items:center;gap:6px;background:var(--teal-100);color:var(--teal-800);
+  padding:5px 11px;border-radius:999px;font-size:12.5px;font-weight:600;margin:0 4px 4px 0;
+}
+.list-tag button{background:none;border:none;color:var(--teal-700);cursor:pointer;font-size:13px;padding:0;line-height:1;}
+
+.print-only{display:none;}
+@media print{
+  .no-print{display:none !important;}
+  .print-only{display:block;}
+  body{background:white;}
+  .content{padding:0;}
+  .panel{box-shadow:none;border:1px solid #ccc;}
+}
+
+@media (min-width:901px){
+  .user-info{display:block;}
+}
+@media (max-width:900px){
+  .nav{display:none;}
+  .hamburger{display:inline-flex;}
+  .info-header{padding:12px 16px;justify-content:center;}
+  .ih-meta{justify-content:center;gap:18px;}
+  .ih-meta div{text-align:center;}
+  .topheader-row{padding:12px 16px;grid-template-columns:1fr auto auto;}
+  .content{padding:18px 16px 50px;}
+  .pagehead{padding:10px 16px;}
+  .pagehead-actions select{max-width:none;flex:1;min-width:0;}
+}
+</style>
+</head>
+<body>
+
+<!-- ================= LOGIN SCREEN ================= -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/></svg>
+    </div>
+    <h1>দাওয়াতি রিপোর্ট ব্যবস্থাপনা</h1>
+    <p class="sub">লগইন করে চালিয়ে যান</p>
+
+    <div class="login-error" id="loginError"></div>
+
+    <div class="field">
+      <label>ইউজারনেম</label>
+      <select id="loginUsername">
+        <option value="">-- নির্বাচন করুন --</option>
+        <option value="__admin__">এডমিন লগইন</option>
+        <option value="__branch__">শাখা লগইন</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>পাসওয়ার্ড</label>
+      <input type="password" id="loginPassword" placeholder="পাসওয়ার্ড লিখুন">
+    </div>
+    <button class="btn btn-primary btn-block" onclick="doLogin()" id="loginBtn">লগইন করুন</button>
+    <p class="login-hint" id="loginMainBranchHint"></p>
+  </div>
+</div>
+
+<!-- ================= APP ================= -->
+<div id="app">
+<div class="shell">
+
+  <header class="topheader no-print">
+    <div class="topheader-row">
+      <div class="brand">
+        <div class="brand-mark"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/></svg></div>
+        <div class="brand-text"><b id="brandName">দাওয়াতী রিপোর্ট</b><span id="brandAddress">ব্যবস্থাপনা সিস্টেম</span></div>
+      </div>
+
+      <nav class="nav" id="navMenu"></nav>
+
+      <div class="user-chip">
+        <div class="user-avatar" id="userAvatar">A</div>
+        <div class="user-info"><b id="userName">-</b><span id="userRole">-</span></div>
+        <button class="logout-btn" onclick="logout()">লগ আউট</button>
+      </div>
+
+      <button class="hamburger" onclick="toggleSidebar()" id="hamburgerBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+      </button>
+    </div>
+
+    <nav class="mobile-nav-drawer" id="mobileNavDrawer"></nav>
+  </header>
+
+  <div class="main">
+    <div class="info-header no-print" id="infoHeaderBar"></div>
+    <div class="pagehead no-print">
+      <h2 id="pageTitle">ড্যাশবোর্ড</h2>
+      <div class="pagehead-actions">
+        <label for="globalProgramSelect">কর্মসূচী নির্বাচন করুন</label>
+        <select id="globalProgramSelect"><option value="">লোড হচ্ছে...</option></select>
+        <button class="icon-btn" id="refreshBtn" onclick="refreshCurrentPage()" title="রিফ্রেশ করুন" aria-label="রিফ্রেশ করুন">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="content" id="pageContent"></div>
+    <div class="footer-bar no-print">@Powered by: <b>AM Shahed</b>: 01605-721296</div>
+  </div>
+
+</div>
+</div>
+
+<div id="toastHolder"></div>
+
+<script>
+/* ====================================================================
+   কনফিগারেশন
+==================================================================== */
+const CONFIG = {
+  API_URL: 'https://script.google.com/macros/s/AKfycbyTfcdXhL5EwTFEVVlmsGoL_pYrSMRkULe1HOVtqDEYwjoIIldq1uIcILzRQNbxYewQ/exec'
+};
+
+/* ====================================================================
+   স্টেট
+==================================================================== */
+let STATE = {
+  user: null,           // {username, role, branchId, branchName}
+  programs: [],
+  branches: [],
+  settings: {},
+  currentPage: 'dashboard',
+  activeProgramId: null
+};
+
+/* ====================================================================
+   API হেল্পার
+==================================================================== */
+function apiCall(action, params = {}) {
+  return new Promise((resolve, reject) => {
+    const body = Object.assign({ action }, params);
+    fetch(CONFIG.API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(body)
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) resolve(data.data !== undefined ? data.data : data);
+        else reject(data.message || 'অজানা ত্রুটি');
+      })
+      .catch(err => reject('নেটওয়ার্ক ত্রুটি: ' + err.message));
+  });
+}
+
+function showLoading(msg) {
+  const el = document.createElement('div');
+  el.className = 'loading-overlay';
+  el.id = 'globalLoading';
+  el.innerHTML = `<div class="loading-box"><div class="spinner"></div><span>${msg || 'লোড হচ্ছে...'}</span></div>`;
+  document.body.appendChild(el);
+}
+function hideLoading() {
+  const el = document.getElementById('globalLoading');
+  if (el) el.remove();
+}
+function toast(msg, isError) {
+  const holder = document.getElementById('toastHolder');
+  const el = document.createElement('div');
+  el.className = 'toast' + (isError ? ' error' : '');
+  el.innerHTML = `<span>${msg}</span>`;
+  holder.appendChild(el);
+  setTimeout(() => el.remove(), 3200);
+}
+
+/* ====================================================================
+   লগইন
+==================================================================== */
+function doLogin() {
+  const selected = document.getElementById('loginUsername').value;
+  const password = document.getElementById('loginPassword').value.trim();
+  const errEl = document.getElementById('loginError');
+  errEl.style.display = 'none';
+
+  if (!selected) {
+    errEl.textContent = 'ইউজারনেম নির্বাচন করুন';
+    errEl.style.display = 'block';
+    return;
+  }
+  if (!password) {
+    errEl.textContent = 'পাসওয়ার্ড দিন';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  const btn = document.getElementById('loginBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner" style="border-color:rgba(255,255,255,.4);border-top-color:white;"></div>';
+
+  const payload = selected === '__admin__'
+    ? { loginType: 'admin', password }
+    : { loginType: 'branch', password };
+
+  apiCall('login', payload)
+    .then(data => {
+      STATE.user = data;
+      startApp();
+    })
+    .catch(err => {
+      errEl.textContent = typeof err === 'string' ? err : 'লগইন ব্যর্থ হয়েছে';
+      errEl.style.display = 'block';
+    })
+    .finally(() => {
+      btn.disabled = false;
+      btn.innerHTML = 'লগইন করুন';
+    });
+}
+
+function logout() {
+  STATE.user = null;
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('loginUsername').value = '';
+  document.getElementById('loginPassword').value = '';
+  // পরবর্তী লগইন দ্রুত করার জন্য আগে থেকেই bootstrap ডাটা আনা শুরু করে রাখা হয়
+  bootstrapPrefetchPromise = apiCall('getBootstrap').catch(() => null);
+}
+
+/* ====================================================================
+   অ্যাপ চালু করা
+==================================================================== */
+function toggleSidebar() {
+  document.getElementById('mobileNavDrawer').classList.toggle('open');
+}
+function closeMobileDrawer() {
+  document.getElementById('mobileNavDrawer').classList.remove('open');
+}
+
+function startApp() {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+
+  document.getElementById('userName').textContent = STATE.user.role === 'admin' ? 'এডমিন' : 'শাখা ইউজার';
+  document.getElementById('userRole').textContent = STATE.user.role === 'admin' ? 'প্রশাসক' : 'শাখা ইউজার';
+  document.getElementById('userAvatar').textContent = STATE.user.role === 'admin' ? 'এ' : 'শ';
+
+  buildNav();
+  setupGlobalProgramSelect();
+  showLoading('তথ্য লোড হচ্ছে...');
+  const bootstrapCall = bootstrapPrefetchPromise || apiCall('getBootstrap');
+  bootstrapPrefetchPromise = null; // একবারই ব্যবহার হবে, পরবর্তী লগইনে নতুন করে আনতে হবে
+  bootstrapCall
+    .then((data) => {
+      if (!data) return apiCall('getBootstrap');
+      return data;
+    })
+    .then(({ settings, programs, branches }) => {
+      STATE.settings = settings || {};
+      STATE.programs = programs || [];
+      STATE.branches = branches || [];
+      if (STATE.programs.length) STATE.activeProgramId = STATE.programs[STATE.programs.length - 1].id;
+      refreshGlobalProgramSelect();
+      updateBrandText();
+      renderInfoHeaderBar();
+      navigate(STATE.user.role === 'admin' ? 'dashboard' : 'branchEntry');
+    })
+    .catch(err => {
+      toast(err, true);
+    })
+    .finally(hideLoading);
+}
+
+/* ====================================================================
+   গ্লোবাল ইনফো-হেডার ও কর্মসূচী নির্বাচন বক্স (topheader এর নিচে, সব পেইজে দেখাবে)
+==================================================================== */
+function setupGlobalProgramSelect() {
+  const sel = document.getElementById('globalProgramSelect');
+  if (!sel || sel.dataset.wired) return;
+  sel.dataset.wired = '1';
+  sel.onchange = () => {
+    STATE.activeProgramId = sel.value;
+    renderInfoHeaderBar();
+    navigate(STATE.currentPage);
+  };
+}
+
+function refreshGlobalProgramSelect() {
+  const sel = document.getElementById('globalProgramSelect');
+  if (!sel) return;
+  if (!STATE.programs.length) {
+    sel.innerHTML = `<option value="">কোনো কর্মসূচী নেই</option>`;
+    return;
+  }
+  sel.innerHTML = STATE.programs.map(p => `<option value="${p.id}" ${p.id === STATE.activeProgramId ? 'selected' : ''}>${esc(programDisplayName(p))}</option>`).join('');
+}
+
+// রিফ্রেশ বাটন — সার্ভারের ক্যাশ জোর করে বাতিল করে সব ডাটা (সেটিংস/কর্মসূচী/শাখা + বর্তমান পেইজ) আবার আনে,
+// কিন্তু পেইজ পরিবর্তন হয় না বা লগইন থেকে বের হয়ে যায় না
+function refreshCurrentPage() {
+  const btn = document.getElementById('refreshBtn');
+  if (btn) { btn.classList.add('spinning'); btn.disabled = true; }
+  apiCall('forceRefresh')
+    .then(() => apiCall('getBootstrap'))
+    .then(({ settings, programs, branches }) => {
+      STATE.settings = settings || STATE.settings;
+      STATE.programs = programs || STATE.programs;
+      STATE.branches = branches || STATE.branches;
+      STATE.dashboardCache = {};
+      refreshGlobalProgramSelect();
+      updateBrandText();
+      renderInfoHeaderBar();
+      navigate(STATE.currentPage);
+      toast('তথ্য আপডেট হয়েছে');
+    })
+    .catch(err => toast(err, true))
+    .finally(() => { if (btn) { btn.classList.remove('spinning'); btn.disabled = false; } });
+}
+
+// মূল শাখার নাম ও ঠিকানা টপহেডারের বাম পাশে (ব্র্যান্ড অংশে) দেখানো হয়
+function updateBrandText() {
+  const s = STATE.settings || {};
+  const nameEl = document.getElementById('brandName');
+  const addrEl = document.getElementById('brandAddress');
+  if (nameEl) nameEl.textContent = s.mainBranchName || 'দাওয়াতী রিপোর্ট';
+  if (addrEl) addrEl.textContent = s.mainBranchAddress || 'ব্যবস্থাপনা সিস্টেম';
+}
+
+function renderInfoHeaderBar() {
+  const bar = document.getElementById('infoHeaderBar');
+  if (!bar) return;
+  const prog = STATE.programs.find(p => p.id === STATE.activeProgramId);
+  bar.innerHTML = `
+    <div class="ih-meta">
+      <div><div class="k">কর্মসূচী</div><div class="v">${esc(programDisplayName(prog))}</div></div>
+      <div><div class="k">সময়কাল</div><div class="v">${prog ? fmtBnDate(prog.startDate) + ' — ' + fmtBnDate(prog.extendedDate || prog.endDate) : '-'}</div></div>
+      <div><div class="k">মোট দিন</div><div class="v">${prog ? fmtNum(prog.totalDays) : '-'}</div></div>
+    </div>
+  `;
+}
+
+function buildNav() {
+  const nav = document.getElementById('navMenu');
+  const icon = {
+    dashboard: '<path d="M3 13h8V3H3v10Zm0 8h8v-6H3v6Zm10 0h8V11h-8v10Zm0-18v6h8V3h-8Z"/>',
+    entry: '<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
+    admin: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/>',
+    print: '<path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>',
+    caret: '<path d="M6 9l6 6 6-6"/>'
+  };
+
+  const adminSubPages = ['adminMainBranch', 'adminBranches', 'adminPrograms'];
+  const adminSubmenuHTML = (extraClass) => `
+    <button class="nav-item" data-page="adminMainBranch" onclick="navigate('adminMainBranch')">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${icon.admin}</svg>
+      <span>মূল শাখা সেটাপ</span>
+    </button>
+    <button class="nav-item" data-page="adminBranches" onclick="navigate('adminBranches')">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${icon.admin}</svg>
+      <span>শাখা এন্ট্রি</span>
+    </button>
+    <button class="nav-item" data-page="adminPrograms" onclick="navigate('adminPrograms')">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${icon.admin}</svg>
+      <span>কর্মসূচী</span>
+    </button>
+  `;
+
+  let html = '';
+  if (STATE.user.role === 'admin') {
+    html += navBtn('dashboard', 'ড্যাশবোর্ড', icon.dashboard);
+    html += navBtn('dailyEntry', 'রিপোর্ট এন্ট্রি', icon.entry);
+    html += `
+      <div class="nav-dropdown" id="adminNavDropdown">
+        <button class="nav-item" id="adminNavToggle" onclick="toggleAdminDropdown(event)">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${icon.admin}</svg>
+          <span>এডমিন</span>
+          <svg class="nav-dropdown-caret" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${icon.caret}</svg>
+        </button>
+        <div class="nav-dropdown-menu" id="adminNavMenu">${adminSubmenuHTML()}</div>
+      </div>`;
+    html += navBtn('adminReports', 'রিপোর্ট', icon.print);
+  } else {
+    html += navBtn('branchEntry', 'রিপোর্ট এন্ট্রি', icon.entry);
+    html += navBtn('branchPrint', 'রিপোর্ট প্রিন্ট', icon.print);
+  }
+  nav.innerHTML = html;
+
+  // মোবাইল ড্রয়ার: একই কাঠামো কিন্তু এডমিন সাবমেনু ক্লিক করলে খুলবে/বন্ধ হবে
+  let mHtml = '';
+  if (STATE.user.role === 'admin') {
+    mHtml += navBtn('dashboard', 'ড্যাশবোর্ড', icon.dashboard);
+    mHtml += navBtn('dailyEntry', 'রিপোর্ট এন্ট্রি', icon.entry);
+    mHtml += `
+      <div class="nav-dropdown" id="adminNavDropdownMobile">
+        <button class="nav-item" onclick="toggleAdminDropdown(event, true)">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${icon.admin}</svg>
+          <span>এডমিন</span>
+          <svg class="nav-dropdown-caret" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${icon.caret}</svg>
+        </button>
+        <div class="nav-dropdown-menu" id="adminNavMenuMobile">${adminSubmenuHTML()}</div>
+      </div>`;
+    mHtml += navBtn('adminReports', 'রিপোর্ট', icon.print);
+  } else {
+    mHtml += navBtn('branchEntry', 'রিপোর্ট এন্ট্রি', icon.entry);
+    mHtml += navBtn('branchPrint', 'রিপোর্ট প্রিন্ট', icon.print);
+  }
+  document.getElementById('mobileNavDrawer').innerHTML = mHtml;
+}
+
+function toggleAdminDropdown(evt, isMobile) {
+  evt.stopPropagation();
+  const dropdown = document.getElementById(isMobile ? 'adminNavDropdownMobile' : 'adminNavDropdown');
+  const menu = document.getElementById(isMobile ? 'adminNavMenuMobile' : 'adminNavMenu');
+  const willOpen = !menu.classList.contains('open');
+  document.querySelectorAll('.nav-dropdown-menu').forEach(m => m.classList.remove('open'));
+  document.querySelectorAll('.nav-dropdown').forEach(d => d.classList.remove('open'));
+  if (willOpen) { menu.classList.add('open'); dropdown.classList.add('open'); }
+}
+
+document.addEventListener('click', () => {
+  document.querySelectorAll('.nav-dropdown-menu').forEach(m => m.classList.remove('open'));
+  document.querySelectorAll('.nav-dropdown').forEach(d => d.classList.remove('open'));
+});
+
+function navBtn(page, label, iconSvg) {
+  return `<button class="nav-item" data-page="${page}" onclick="navigate('${page}')">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${iconSvg}</svg>
+    <span>${label}</span>
+  </button>`;
+}
+
+const PAGE_TITLES = {
+  dashboard: 'ড্যাশবোর্ড',
+  dailyEntry: 'রিপোর্ট এন্ট্রি',
+  adminMainBranch: 'মূল শাখা সেটাপ',
+  adminPrograms: 'কর্মসূচী ব্যবস্থাপনা',
+  adminBranches: 'শাখা এন্ট্রি',
+  adminReports: 'রিপোর্ট',
+  branchEntry: 'রিপোর্ট এন্ট্রি',
+  branchPrint: 'রিপোর্ট প্রিন্ট'
+};
+
+function navigate(page) {
+  STATE.currentPage = page;
+  document.getElementById('pageTitle').textContent = PAGE_TITLES[page] || '';
+  document.querySelectorAll('.nav-item[data-page]').forEach(b => b.classList.toggle('active', b.dataset.page === page));
+
+  const adminSubPages = ['adminMainBranch', 'adminBranches', 'adminPrograms'];
+  const isAdminSub = adminSubPages.includes(page);
+  const toggleBtn = document.getElementById('adminNavToggle');
+  if (toggleBtn) toggleBtn.classList.toggle('active', isAdminSub);
+
+  document.querySelectorAll('.nav-dropdown-menu').forEach(m => m.classList.remove('open'));
+  document.querySelectorAll('.nav-dropdown').forEach(d => d.classList.remove('open'));
+  closeMobileDrawer();
+  programFormOpen = false;
+  editingProgramId = null;
+  mainBranchFormOpen = false;
+  branchFormOpen = false;
+  editingBranchId = null;
+  passwordFormOpen = false;
+
+  const renderers = {
+    dashboard: renderDashboard,
+    dailyEntry: renderDailyEntry,
+    adminMainBranch: renderAdminMainBranch,
+    adminPrograms: renderAdminPrograms,
+    adminBranches: renderAdminBranches,
+    adminReports: renderAdminReports,
+    branchEntry: renderBranchEntry,
+    branchPrint: renderBranchPrint
+  };
+  (renderers[page] || renderDashboard)();
+}
+
+function el(html) {
+  const c = document.getElementById('pageContent');
+  c.innerHTML = html;
+}
+
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function fmtNum(n) {
+  return Number(n || 0).toLocaleString('bn-BD');
+}
+
+// বছর/তারিখের মতো সংখ্যায় (যেখানে হাজার আলাদা করার কমা লাগবে না) শুধু বাংলা অঙ্কে রূপান্তরের জন্য
+const BN_DIGITS = ['০','১','২','৩','৪','৫','৬','৭','৮','৯'];
+function toBnDigits(n) {
+  return String(n).replace(/[0-9]/g, d => BN_DIGITS[d]);
+}
+
+const BN_MONTHS = ['জানুয়ারি','ফেব্রুয়ারি','মার্চ','এপ্রিল','মে','জুন','জুলাই','আগস্ট','সেপ্টেম্বর','অক্টোবর','নভেম্বর','ডিসেম্বর'];
+
+// yyyy-MM-dd ফরম্যাটের তারিখকে "১ আগস্ট ২০২৬" আকারে দেখানোর জন্য (শুধু প্রদর্শনের জন্য, ইনপুট বক্সে নয়)
+function fmtBnDate(dateStr) {
+  if (!dateStr) return '-';
+  const parts = String(dateStr).split('-');
+  if (parts.length !== 3) return dateStr;
+  const day = parseInt(parts[2], 10);
+  const monthIdx = parseInt(parts[1], 10) - 1;
+  const year = parts[0];
+  if (isNaN(day) || monthIdx < 0 || monthIdx > 11) return dateStr;
+  return `${toBnDigits(day)} ${BN_MONTHS[monthIdx]} ${toBnDigits(year)}`;
+}
+
+function todayISO() {
+  const d = new Date();
+  return d.toISOString().slice(0, 10);
+}
+
+// কর্মসূচীর নাম সবসময় "গণসংযোগ পক্ষ (২০২৬)" এভাবে দেখানোর জন্য শেয়ার্ড হেল্পার
+function programDisplayName(program) {
+  if (!program) return '-';
+  const year = program.year || new Date().getFullYear();
+  return `${program.name} (${toBnDigits(year)})`;
+}
+
+/* ====================================================================
+   ড্যাশবোর্ড (এডমিন)
+==================================================================== */
+function renderDashboard() {
+  el(`<div id="dashBody"></div>`);
+  loadDashboardData();
+}
+
+function loadDashboardData() {
+  if (!STATE.activeProgramId && STATE.programs.length) STATE.activeProgramId = STATE.programs[STATE.programs.length - 1].id;
+  const programId = STATE.activeProgramId || '';
+  const bodyEl = document.getElementById('dashBody');
+
+  if (!STATE.dashboardCache) STATE.dashboardCache = {};
+  const cached = STATE.dashboardCache[programId];
+
+  if (cached) {
+    // ক্যাশ থেকে সাথে সাথে দেখাও (কোনো লোডিং স্পিনার ছাড়া), পেছনে নতুন ডাটা আনো
+    renderDashboardBody(cached);
+  } else if (bodyEl) {
+    bodyEl.innerHTML = `<div class="empty-state"><div class="spinner" style="border-color:rgba(19,138,120,.2);border-top-color:var(--teal-600);width:22px;height:22px;margin:0 auto 12px;"></div><p>লোড হচ্ছে...</p></div>`;
+  }
+
+  apiCall('getDashboard', { programId })
+    .then(data => {
+      STATE.dashboardCache[programId] = data;
+      // ইউজার এই সময়ের মধ্যে অন্য কর্মসূচী বা পেইজে সরে গেলে পুরনো ডাটা দিয়ে ওভাররাইট করব না
+      if (STATE.currentPage === 'dashboard' && STATE.activeProgramId === programId) {
+        renderDashboardBody(data);
+      }
+    })
+    .catch(err => { if (!cached) toast(err, true); });
+}
+
+function renderDashboardBody(data) {
+  const bodyEl = document.getElementById('dashBody');
+  if (!bodyEl) return;
+  bodyEl.innerHTML = `
+        <div class="section-header" style="margin-top:0;"><h3>সার্বিক অবস্থা (সর্বমোট)</h3></div>
+        <div class="grid-cards">
+          ${statCard('রিপোর্ট দিয়েছে', data.overall.reportedBranches, 'accent-teal')}
+          ${statCard('রিপোর্ট দেয়নি', data.overall.notReportedBranches, 'accent-red')}
+          ${statCard('রুকন গণসংযোগে অংশগ্রহণ', data.overall.totalRukon)}
+          ${statCard('কর্মী গণসংযোগে অংশগ্রহণ', data.overall.totalKormi)}
+          ${statCard('ইউনিট গণসংযোগে অংশগ্রহণ', data.overall.totalUnit)}
+          ${statCard('মোট গ্রুপ বের হয়েছে', data.overall.totalGroup)}
+          ${statCard('মোট দাওয়াত প্রদান', data.overall.totalDawat)}
+          ${statCard('মোট সহযোগী সদস্য', data.overall.totalShohojogi, 'accent-gold')}
+        </div>
+
+        <div class="section-header"><h3>আজকের রিপোর্ট</h3></div>
+        <div class="grid-cards">
+          ${statCard('আজ রিপোর্ট দিয়েছে (শাখা)', data.today.branchCount)}
+          ${statCard('আজ রিপোর্ট দেয়নি (শাখা)', data.today.branchNotReportedCount, 'accent-red')}
+          ${statCard('রুকন গণসংযোগে অংশগ্রহণ', data.today.totalRukon)}
+          ${statCard('কর্মী গণসংযোগে অংশগ্রহণ', data.today.totalKormi)}
+          ${statCard('ইউনিট গণসংযোগে অংশগ্রহণ', data.today.totalUnit)}
+          ${statCard('মোট গ্রুপ বের হয়েছে', data.today.totalGroup)}
+          ${statCard('মোট দাওয়াত প্রদান', data.today.totalDawat)}
+          ${statCard('মোট সহযোগী সদস্য', data.today.totalShohojogi, 'accent-gold')}
+        </div>
+
+        <div class="section-header"><h3>শাখা ভিত্তিক তালিকা</h3></div>
+        <div class="table-scroll">
+          <table class="data-table branchwise-table">
+            <thead><tr>
+              <th style="text-align:center;">শাখার নাম</th>
+              <th>মোট রুকন</th><th>রুকন অংশগ্রহণ</th>
+              <th>মোট কর্মী</th><th>কর্মী অংশগ্রহণ</th>
+              <th>মোট ইউনিট</th><th>ইউনিট অংশগ্রহণ</th>
+              <th>গ্রুপ</th><th>দাওয়াত</th><th>সহযোগী সদস্য</th>
+            </tr></thead>
+            <tbody>
+              ${data.branchWise.length ? data.branchWise.map(b => `
+                <tr>
+                  <td><b>${esc(b.branchName)}</b></td>
+                  <td>${fmtNum(b.profileRukon)}</td>
+                  <td>${fmtNum(b.rukonParticipated)}</td>
+                  <td>${fmtNum(b.profileKormi)}</td>
+                  <td>${fmtNum(b.kormiParticipated)}</td>
+                  <td>${fmtNum(b.profileUnit)}</td>
+                  <td>${fmtNum(b.unitParticipated)}</td>
+                  <td>${fmtNum(b.groupCount)}</td>
+                  <td>${fmtNum(b.dawatCount)}</td>
+                  <td>${fmtNum(b.shohojogiCount)}</td>
+                </tr>
+              `).join('') : `<tr><td colspan="10" style="text-align:center;color:var(--ink-soft);padding:24px;">কোনো শাখা যোগ করা হয়নি</td></tr>`}
+            </tbody>
+          </table>
+        </div>
+      `;
+}
+
+function statCard(label, value, cls) {
+  return `<div class="stat-card ${cls || ''}"><div class="label">${label}</div><div class="value">${fmtNum(value)}</div></div>`;
+}
+
+/* ====================================================================
+   রিপোর্ট এন্ট্রি ফরমের শেয়ার্ড ফিল্ড (এডমিন ও শাখা উভয় জায়গায় ব্যবহৃত)
+==================================================================== */
+function reportEntryFieldsHTML(prefix) {
+  return `
+    <div class="form-grid" style="margin-top:16px;">
+      <div class="field"><label>মোট রুকন</label><input type="number" id="${prefix}RukonTotal" value="0" readonly></div>
+      <div class="field"><label>গণসংযোগে অংশ নিয়েছেন (রুকন)</label><input type="number" min="0" id="${prefix}RukonParticipated" value="0"></div>
+      <div class="field"><label>মোট কর্মী</label><input type="number" id="${prefix}KormiTotal" value="0" readonly></div>
+      <div class="field"><label>গণসংযোগে অংশ নিয়েছেন (কর্মী)</label><input type="number" min="0" id="${prefix}KormiParticipated" value="0"></div>
+      <div class="field"><label>মোট ইউনিট</label><input type="number" id="${prefix}UnitTotal" value="0" readonly></div>
+      <div class="field"><label>গণসংযোগে অংশ নিয়েছেন (ইউনিট)</label><input type="number" min="0" id="${prefix}UnitParticipated" value="0"></div>
+      <div class="field"><label>মোট গ্রুপ বের হয়েছে</label><input type="number" min="0" id="${prefix}Group" value="0"></div>
+      <div class="field"><label>মোট দাওয়াত দেয়া হয়েছে</label><input type="number" min="0" id="${prefix}Dawat" value="0"></div>
+      <div class="field"><label>মোট সহযোগী সদস্য হয়েছে</label><input type="number" min="0" id="${prefix}Shohojogi" value="0"></div>
+    </div>
+  `;
+}
+
+// শাখা সিলেক্ট করলে মোট রুকন/কর্মী/ইউনিট অটো বসিয়ে দেয় (শাখা প্রোফাইল থেকে)
+function wireBranchAutoFill(branchSelectId, prefix) {
+  const sel = document.getElementById(branchSelectId);
+  if (!sel) return;
+  sel.onchange = () => {
+    const branch = STATE.branches.find(b => String(b.id) === sel.value);
+    document.getElementById(prefix + 'RukonTotal').value = branch ? (branch.totalRukon || 0) : 0;
+    document.getElementById(prefix + 'KormiTotal').value = branch ? (branch.totalKormi || 0) : 0;
+    document.getElementById(prefix + 'UnitTotal').value = branch ? (branch.totalUnit || 0) : 0;
+  };
+}
+
+function getReportEntryPayload(prefix) {
+  return {
+    rukonParticipated: document.getElementById(prefix + 'RukonParticipated').value,
+    kormiParticipated: document.getElementById(prefix + 'KormiParticipated').value,
+    unitParticipated: document.getElementById(prefix + 'UnitParticipated').value,
+    groupCount: document.getElementById(prefix + 'Group').value,
+    dawatCount: document.getElementById(prefix + 'Dawat').value,
+    shohojogiCount: document.getElementById(prefix + 'Shohojogi').value
+  };
+}
+
+/* ====================================================================
+   রিপোর্ট এন্ট্রি (এডমিন)
+==================================================================== */
+function renderDailyEntry() {
+  el(`
+    <div class="panel">
+      <div class="section-header" style="margin-top:0;"><h3>রিপোর্ট যোগ করুন</h3></div>
+      <div class="form-grid">
+        <div class="field">
+          <label>তারিখ</label>
+          <input type="date" id="deDate" value="${todayISO()}">
+        </div>
+        <div class="field">
+          <label>কর্মসূচী</label>
+          <select id="deProgram">${STATE.programs.map(p => `<option value="${p.id}" ${p.id===STATE.activeProgramId?'selected':''}>${esc(programDisplayName(p))}</option>`).join('') || '<option value="">কর্মসূচী নেই</option>'}</select>
+        </div>
+        <div class="field">
+          <label>শাখার নাম</label>
+          <select id="deBranch">
+            <option value="">-- নির্বাচন করুন --</option>
+            ${STATE.branches.map(b => `<option value="${b.id}">${esc(b.name)}</option>`).join('') || ''}
+          </select>
+        </div>
+      </div>
+
+      ${reportEntryFieldsHTML('de')}
+
+      <div class="form-actions">
+        <button class="btn btn-primary" onclick="submitDailyEntry()">রিপোর্ট সংরক্ষণ করুন</button>
+      </div>
+    </div>
+
+    <div class="section-header"><h3>সাম্প্রতিক রিপোর্টসমূহ</h3></div>
+    <div id="recentReportsBox" class="table-scroll"><div class="empty-state"><p>লোড হচ্ছে...</p></div></div>
+  `);
+  wireBranchAutoFill('deBranch', 'de');
+  loadRecentReports();
+}
+
+function submitDailyEntry() {
+  const branchId = document.getElementById('deBranch').value;
+  if (!branchId) { toast('শাখা নির্বাচন করুন', true); return; }
+  const programId = document.getElementById('deProgram').value;
+  if (!programId) { toast('কর্মসূচী নির্বাচন করুন', true); return; }
+
+  const payload = Object.assign({
+    date: document.getElementById('deDate').value,
+    programId,
+    branchIds: JSON.stringify([branchId])
+  }, getReportEntryPayload('de'));
+
+  showLoading('সংরক্ষণ হচ্ছে...');
+  apiCall('saveReport', payload)
+    .then(() => { STATE.dashboardCache = {}; toast('রিপোর্ট সফলভাবে সংরক্ষণ হয়েছে'); renderDailyEntry(); })
+    .catch(err => toast(err, true))
+    .finally(hideLoading);
+}
+
+function loadRecentReports() {
+  apiCall('getReports', {}).then(reports => {
+    reports.sort((a, b) => b.date.localeCompare(a.date));
+    reports = reports.slice(0, 30);
+    const box = document.getElementById('recentReportsBox');
+    if (!box) return;
+    box.innerHTML = `
+      <table class="data-table recent-reports-table">
+        <thead><tr><th>তারিখ</th><th>শাখা</th><th>রুকন</th><th>কর্মী</th><th>ইউনিট</th><th>গ্রুপ</th><th>দাওয়াত</th><th>সহযোগী</th><th></th></tr></thead>
+        <tbody>
+          ${reports.length ? reports.map(r => `
+            <tr>
+              <td>${fmtBnDate(r.date)}</td><td class="branch-col">${esc(r.branchName)}</td><td>${fmtNum(r.rukonParticipated)}</td>
+              <td>${fmtNum(r.kormiParticipated)}</td><td>${fmtNum(r.unitParticipated)}</td><td>${fmtNum(r.groupCount)}</td><td>${fmtNum(r.dawatCount)}</td><td>${fmtNum(r.shohojogiCount)}</td>
+              <td><button class="btn btn-danger btn-sm" onclick="deleteReportRow('${r.id}')">মুছুন</button></td>
+            </tr>
+          `).join('') : `<tr><td colspan="9" style="text-align:center;padding:22px;color:var(--ink-soft);">কোনো রিপোর্ট নেই</td></tr>`}
+        </tbody>
+      </table>`;
+  }).catch(err => toast(err, true));
+}
+
+function deleteReportRow(id) {
+  if (!confirm('আপনি কি নিশ্চিত এই রিপোর্টটি মুছে ফেলতে চান?')) return;
+  showLoading('মুছে ফেলা হচ্ছে...');
+  apiCall('deleteReport', { id })
+    .then(() => { STATE.dashboardCache = {}; toast('রিপোর্ট মুছে ফেলা হয়েছে'); loadRecentReports(); })
+    .catch(err => toast(err, true))
+    .finally(hideLoading);
+}
+
+/* ====================================================================
+   এডমিন: মূল শাখা সেটাপ
+==================================================================== */
+function renderAdminMainBranch() {
+  el(`
+    <div class="panel">
+      <div class="section-header" style="margin-top:0;">
+        <h3>মূল শাখা তথ্য</h3>
+        <button class="btn btn-primary btn-sm" onclick="toggleMainBranchForm()">মূল শাখা সেটাপ ফরম</button>
+      </div>
+
+      <div id="mbCurrentInfo">
+        ${STATE.settings.mainBranchName ? `
+          <div class="table-scroll">
+            <table class="data-table">
+              <tbody>
+                <tr><td style="width:160px;"><b>শাখার নাম</b></td><td>${esc(STATE.settings.mainBranchName)}</td></tr>
+                <tr><td><b>ঠিকানা</b></td><td>${esc(STATE.settings.mainBranchAddress || '-')}</td></tr>
+              </tbody>
+            </table>
+          </div>
+        ` : `<div class="empty-state"><p>এখনো মূল শাখার তথ্য যোগ করা হয়নি। উপরের বাটনে ক্লিক করে যোগ করুন।</p></div>`}
+      </div>
+
+      <div class="toggle-panel" id="mainBranchFormPanel">
+        <div style="border:1.5px solid var(--teal-200,#bcecdf);border-radius:12px;padding:18px;margin-top:18px;background:var(--teal-50);">
+          <div class="form-grid">
+            <div class="field"><label>শাখার নাম</label><input id="mbName" value="${esc(STATE.settings.mainBranchName || '')}"></div>
+            <div class="field"><label>ঠিকানা</label><input id="mbAddress" value="${esc(STATE.settings.mainBranchAddress || '')}"></div>
+          </div>
+          <div class="form-actions">
+            <button class="btn btn-primary" onclick="saveMainBranch()">সংরক্ষণ করুন</button>
+            <button class="btn btn-secondary" onclick="toggleMainBranchForm()">বাতিল</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `);
+}
+
+let mainBranchFormOpen = false;
+function toggleMainBranchForm() {
+  mainBranchFormOpen = !mainBranchFormOpen;
+  document.getElementById('mainBranchFormPanel').classList.toggle('open', mainBranchFormOpen);
+}
+
+function saveMainBranch() {
+  const payload = {
+    mainBranchName: document.getElementById('mbName').value.trim(),
+    mainBranchAddress: document.getElementById('mbAddress').value.trim()
+  };
+  showLoading('সংরক্ষণ হচ্ছে...');
+  apiCall('saveSettings', payload)
+    .then(() => {
+      STATE.settings = Object.assign({}, STATE.settings, payload);
+      STATE.dashboardCache = {};
+      updateBrandText();
+      renderInfoHeaderBar();
+      toast('মূল শাখা তথ্য সংরক্ষণ হয়েছে');
+      mainBranchFormOpen = false;
+      renderAdminMainBranch();
+    })
+    .catch(err => toast(err, true))
+    .finally(hideLoading);
+}
+
+/* ====================================================================
+   এডমিন: কর্মসূচী
+==================================================================== */
+let programFormOpen = false;
+let editingProgramId = null;
+
+function renderAdminPrograms() {
+  el(`
+    <div class="panel">
+      <div class="section-header" style="margin-top:0;">
+        <h3>কর্মসূচী তালিকা</h3>
+        <button class="btn btn-primary btn-sm" onclick="toggleProgramForm()">+ নতুন কর্মসূচী যোগ করুন</button>
+      </div>
+
+      <div class="toggle-panel" id="programFormPanel">
+        <div style="border:1.5px solid var(--teal-200,#bcecdf);border-radius:12px;padding:18px;margin-bottom:18px;background:var(--teal-50);">
+          <div class="form-grid">
+            <div class="field"><label>কর্মসূচীর নাম</label><input id="pgName"></div>
+            <div class="field"><label>বছর</label><input type="number" id="pgYear" value="${new Date().getFullYear()}"></div>
+            <div class="field"><label>শুরুর তারিখ</label><input type="date" id="pgStart"></div>
+            <div class="field"><label>শেষ তারিখ</label><input type="date" id="pgEnd"></div>
+            <div class="field"><label>সময় বৃদ্ধি (নতুন তারিখ, ঐচ্ছিক)</label><input type="date" id="pgExtend"></div>
+          </div>
+          <div class="form-actions">
+            <button class="btn btn-primary" onclick="saveProgramForm()">সংরক্ষণ করুন</button>
+            <button class="btn btn-secondary" onclick="toggleProgramForm()">বাতিল</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-scroll">
+        <table class="data-table programs-table">
+          <thead><tr><th>কর্মসূচীর নাম</th><th>শুরু</th><th>শেষ</th><th>বর্ধিত সময়</th><th>মোট দিন</th><th></th></tr></thead>
+          <tbody id="programsTbody"></tbody>
+        </table>
+      </div>
+    </div>
+  `);
+  refreshProgramsTable();
+}
+
+function toggleProgramForm() {
+  programFormOpen = !programFormOpen;
+  document.getElementById('programFormPanel').classList.toggle('open', programFormOpen);
+  if (!programFormOpen) {
+    editingProgramId = null;
+    document.getElementById('pgName').value = '';
+    document.getElementById('pgYear').value = new Date().getFullYear();
+    document.getElementById('pgStart').value = '';
+    document.getElementById('pgEnd').value = '';
+    document.getElementById('pgExtend').value = '';
+  }
+}
+
+function refreshProgramsTable() {
+  apiCall('getPrograms').then(programs => {
+    STATE.programs = programs;
+    refreshGlobalProgramSelect();
+    renderInfoHeaderBar();
+    const tbody = document.getElementById('programsTbody');
+    if (!tbody) return;
+    tbody.innerHTML = programs.length ? programs.map(p => `
+      <tr>
+        <td style="text-align:left;"><b>${esc(programDisplayName(p))}</b></td>
+        <td>${fmtBnDate(p.startDate)}</td>
+        <td>${fmtBnDate(p.endDate)}</td>
+        <td>${p.extendedDate ? fmtBnDate(p.extendedDate) : '<span style="color:var(--ink-soft);">—</span>'}</td>
+        <td><span class="badge badge-teal">${fmtNum(p.totalDays)} দিন</span></td>
+        <td style="display:flex;gap:6px;justify-content:center;">
+          <button class="btn btn-outline btn-sm" onclick="editProgram('${p.id}')">এডিট</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteProgramRow('${p.id}')">ডিলেট</button>
+        </td>
+      </tr>
+    `).join('') : `<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--ink-soft);">কোনো কর্মসূচী যোগ করা হয়নি</td></tr>`;
+  }).catch(err => toast(err, true));
+}
+
+function editProgram(id) {
+  const p = STATE.programs.find(x => x.id === id);
+  if (!p) return;
+  editingProgramId = id;
+  programFormOpen = true;
+  document.getElementById('programFormPanel').classList.add('open');
+  document.getElementById('pgName').value = p.name;
+  document.getElementById('pgYear').value = p.year || new Date().getFullYear();
+  document.getElementById('pgStart').value = p.startDate;
+  document.getElementById('pgEnd').value = p.endDate;
+  document.getElementById('pgExtend').value = p.extendedDate || '';
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function saveProgramForm() {
+  const name = document.getElementById('pgName').value.trim();
+  const year = document.getElementById('pgYear').value;
+  const startDate = document.getElementById('pgStart').value;
+  const endDate = document.getElementById('pgEnd').value;
+  const extendedDate = document.getElementById('pgExtend').value;
+  if (!name || !year || !startDate || !endDate) { toast('নাম, বছর, শুরু ও শেষ তারিখ আবশ্যক', true); return; }
+
+  const payload = { name, year, startDate, endDate, extendedDate };
+  if (editingProgramId) payload.id = editingProgramId;
+
+  showLoading('সংরক্ষণ হচ্ছে...');
+  apiCall('saveProgram', payload)
+    .then(() => { STATE.dashboardCache = {}; toast('কর্মসূচী সংরক্ষণ হয়েছে'); toggleProgramForm(); refreshProgramsTable(); })
+    .catch(err => toast(err, true))
+    .finally(hideLoading);
+}
+
+function deleteProgramRow(id) {
+  if (!confirm('এই কর্মসূচীটি মুছে ফেলতে চান?')) return;
+  showLoading('মুছে ফেলা হচ্ছে...');
+  apiCall('deleteProgram', { id })
+    .then(() => { STATE.dashboardCache = {}; toast('কর্মসূচী মুছে ফেলা হয়েছে'); refreshProgramsTable(); })
+    .catch(err => toast(err, true))
+    .finally(hideLoading);
+}
+
+/* ====================================================================
+   এডমিন: শাখা এন্ট্রি
+==================================================================== */
+let editingBranchId = null;
+
+function renderAdminBranches() {
+  el(`
+    <div class="panel">
+      <div class="section-header" style="margin-top:0;">
+        <h3>শাখা লগইন পাসওয়ার্ড</h3>
+        <button class="btn btn-primary btn-sm" onclick="togglePasswordForm()">পাসওয়ার্ড পরিবর্তন করুন</button>
+      </div>
+      <p style="margin:0;color:var(--ink-soft);font-size:13.5px;">সকল শাখা লগইন করার সময় এই একই পাসওয়ার্ড ব্যবহার করবে। লগইন করার সময় তালিকা থেকে শাখা নির্বাচন করে এই পাসওয়ার্ড দিতে হবে।</p>
+
+      <div class="toggle-panel" id="passwordFormPanel">
+        <div style="border:1.5px solid var(--teal-200,#bcecdf);border-radius:12px;padding:18px;margin-top:14px;background:var(--teal-50);">
+          <div class="form-grid">
+            <div class="field"><label>নতুন শাখা লগইন পাসওয়ার্ড</label><input type="text" id="branchPasswordInput" value="${esc(STATE.settings.branchPassword || '')}"></div>
+          </div>
+          <div class="form-actions">
+            <button class="btn btn-primary" onclick="saveBranchPassword()">সংরক্ষণ করুন</button>
+            <button class="btn btn-secondary" onclick="togglePasswordForm()">বাতিল</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="section-header" style="margin-top:0;">
+        <h3>শাখা তালিকা</h3>
+        <button class="btn btn-primary btn-sm" onclick="toggleBranchForm()" id="brToggleBtn">+ নতুন শাখা যোগ করুন</button>
+      </div>
+
+      <div class="toggle-panel" id="branchFormPanel">
+        <div style="border:1.5px solid var(--teal-200,#bcecdf);border-radius:12px;padding:18px;margin-bottom:18px;background:var(--teal-50);">
+          <h4 id="branchFormTitle" style="margin:0 0 14px;color:var(--teal-900);font-size:15px;">নতুন শাখা যোগ করুন</h4>
+          <div class="form-grid">
+            <div class="field"><label>শাখার নাম</label><input id="brName"></div>
+            <div class="field"><label>মোট রুকন</label><input type="number" min="0" id="brTotalRukon" value="0"></div>
+            <div class="field"><label>মোট কর্মী</label><input type="number" min="0" id="brTotalKormi" value="0"></div>
+            <div class="field"><label>মোট ইউনিট</label><input type="number" min="0" id="brTotalUnit" value="0"></div>
+          </div>
+          <div class="form-actions">
+            <button class="btn btn-primary" onclick="saveBranchForm()">সংরক্ষণ করুন</button>
+            <button class="btn btn-secondary" onclick="toggleBranchForm()">বাতিল</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-scroll">
+        <table class="data-table branchwise-table">
+          <thead><tr><th>শাখার নাম</th><th>মোট রুকন</th><th>মোট কর্মী</th><th>মোট ইউনিট</th><th></th></tr></thead>
+          <tbody id="branchesTbody"></tbody>
+        </table>
+      </div>
+    </div>
+  `);
+  refreshBranchesTable();
+}
+
+let passwordFormOpen = false;
+function togglePasswordForm() {
+  passwordFormOpen = !passwordFormOpen;
+  document.getElementById('passwordFormPanel').classList.toggle('open', passwordFormOpen);
+}
+
+function saveBranchPassword() {
+  const pw = document.getElementById('branchPasswordInput').value.trim();
+  if (!pw) { toast('পাসওয়ার্ড দিন', true); return; }
+  showLoading('সংরক্ষণ হচ্ছে...');
+  apiCall('saveSettings', { branchPassword: pw })
+    .then(() => {
+      STATE.settings.branchPassword = pw;
+      toast('শাখা লগইন পাসওয়ার্ড সংরক্ষণ হয়েছে');
+      passwordFormOpen = false;
+      document.getElementById('passwordFormPanel').classList.remove('open');
+    })
+    .catch(err => toast(err, true))
+    .finally(hideLoading);
+}
+
+let branchFormOpen = false;
+function toggleBranchForm() {
+  branchFormOpen = !branchFormOpen;
+  document.getElementById('branchFormPanel').classList.toggle('open', branchFormOpen);
+  if (!branchFormOpen) resetBranchFormFields();
+}
+
+function resetBranchFormFields() {
+  editingBranchId = null;
+  document.getElementById('branchFormTitle').textContent = 'নতুন শাখা যোগ করুন';
+  document.getElementById('brName').value = '';
+  document.getElementById('brTotalRukon').value = '0';
+  document.getElementById('brTotalKormi').value = '0';
+  document.getElementById('brTotalUnit').value = '0';
+}
+
+function refreshBranchesTable() {
+  apiCall('getBranches').then(branches => {
+    STATE.branches = branches;
+    const tbody = document.getElementById('branchesTbody');
+    if (!tbody) return;
+    tbody.innerHTML = branches.length ? branches.map(b => `
+      <tr>
+        <td><b>${esc(b.name)}</b></td>
+        <td>${fmtNum(b.totalRukon)}</td>
+        <td>${fmtNum(b.totalKormi)}</td>
+        <td>${fmtNum(b.totalUnit)}</td>
+        <td style="display:flex;gap:6px;justify-content:center;">
+          <button class="btn btn-outline btn-sm" onclick="editBranch('${b.id}')">এডিট</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteBranchRow('${b.id}')">ডিলেট</button>
+        </td>
+      </tr>
+    `).join('') : `<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--ink-soft);">কোনো শাখা যোগ করা হয়নি</td></tr>`;
+  }).catch(err => toast(err, true));
+}
+
+function editBranch(id) {
+  const b = STATE.branches.find(x => x.id === id);
+  if (!b) return;
+  editingBranchId = id;
+  branchFormOpen = true;
+  document.getElementById('branchFormPanel').classList.add('open');
+  document.getElementById('branchFormTitle').textContent = 'শাখা তথ্য এডিট করুন';
+  document.getElementById('brName').value = b.name;
+  document.getElementById('brTotalRukon').value = b.totalRukon || 0;
+  document.getElementById('brTotalKormi').value = b.totalKormi || 0;
+  document.getElementById('brTotalUnit').value = b.totalUnit || 0;
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function saveBranchForm() {
+  const name = document.getElementById('brName').value.trim();
+  if (!name) { toast('শাখার নাম দিন', true); return; }
+  const payload = {
+    name,
+    totalRukon: document.getElementById('brTotalRukon').value,
+    totalKormi: document.getElementById('brTotalKormi').value,
+    totalUnit: document.getElementById('brTotalUnit').value
+  };
+  if (editingBranchId) payload.id = editingBranchId;
+
+  showLoading('সংরক্ষণ হচ্ছে...');
+  apiCall('saveBranch', payload)
+    .then(() => {
+      STATE.dashboardCache = {};
+      toast('শাখা সংরক্ষণ হয়েছে');
+      branchFormOpen = false;
+      document.getElementById('branchFormPanel').classList.remove('open');
+      resetBranchFormFields();
+      refreshBranchesTable();
+    })
+    .catch(err => toast(err, true))
+    .finally(hideLoading);
+}
+
+function deleteBranchRow(id) {
+  if (!confirm('এই শাখাটি মুছে ফেলতে চান? এর লগইনও মুছে যাবে।')) return;
+  showLoading('মুছে ফেলা হচ্ছে...');
+  apiCall('deleteBranch', { id })
+    .then(() => { STATE.dashboardCache = {}; toast('শাখা মুছে ফেলা হয়েছে'); refreshBranchesTable(); })
+    .catch(err => toast(err, true))
+    .finally(hideLoading);
+}
+
+/* ====================================================================
+   এডমিন: রিপোর্ট (২ ধরনের)
+==================================================================== */
+function renderAdminReports() {
+  el(`
+    <div class="panel no-print">
+      <div class="section-header" style="margin-top:0;"><h3>রিপোর্ট প্রিন্ট</h3></div>
+      <div class="form-grid">
+        <div class="field">
+          <label>রিপোর্ট বিভাগ</label>
+          <select id="repCategory">
+            <option value="branch">শাখা ভিত্তিক</option>
+            <option value="main">মূল শাখা</option>
+            <option value="notReported">যেসব শাখা রিপোর্ট দেয়নি</option>
+          </select>
+        </div>
+        <div class="field" id="repBranchSelectWrap">
+          <label>শাখা নির্বাচন করুন</label>
+          <select id="repBranch">
+            <option value="">-- নির্বাচন করুন --</option>
+            ${STATE.branches.map(b => `<option value="${b.id}">${esc(b.name)}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field">
+          <label>কর্মসূচী</label>
+          <select id="repProgram">${STATE.programs.map(p => `<option value="${p.id}" ${p.id===STATE.activeProgramId?'selected':''}>${esc(programDisplayName(p))}</option>`).join('') || '<option value="">নেই</option>'}</select>
+        </div>
+        <div class="field" id="repModeWrap">
+          <label>ধরন</label>
+          <select id="repMode">
+            <option value="daily">দৈনিক (নির্দিষ্ট তারিখ)</option>
+            <option value="period">পক্ষ (পুরো কর্মসূচীর সময়কাল)</option>
+          </select>
+        </div>
+        <div class="field" id="repDateWrap">
+          <label>তারিখ</label>
+          <input type="date" id="repDate" value="${todayISO()}">
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-primary" onclick="loadAdminReport()">রিপোর্ট দেখুন</button>
+        <button class="btn btn-outline" onclick="window.print()">প্রিন্ট করুন</button>
+      </div>
+    </div>
+    <div id="adminReportOutput"></div>
+  `);
+
+  function updateReportFormVisibility() {
+    const category = document.getElementById('repCategory').value;
+    const mode = document.getElementById('repMode').value;
+    document.getElementById('repBranchSelectWrap').style.display = category === 'branch' ? 'block' : 'none';
+    document.getElementById('repModeWrap').style.display = category === 'notReported' ? 'none' : 'block';
+    document.getElementById('repDateWrap').style.display = (category === 'notReported' || mode === 'daily') ? 'block' : 'none';
+  }
+
+  document.getElementById('repCategory').onchange = updateReportFormVisibility;
+  document.getElementById('repMode').onchange = updateReportFormVisibility;
+  updateReportFormVisibility();
+
+  loadAdminReport();
+}
+
+function loadAdminReport() {
+  const category = document.getElementById('repCategory').value;
+  const mode = document.getElementById('repMode').value;
+  const programId = document.getElementById('repProgram').value;
+  const out = document.getElementById('adminReportOutput');
+  if (!out) return;
+
+  if (!programId) { out.innerHTML = `<div class="empty-state"><p>কোনো কর্মসূচী নেই</p></div>`; return; }
+
+  if (category === 'notReported') {
+    const date = document.getElementById('repDate').value;
+    showLoading('লোড হচ্ছে...');
+    apiCall('getMissingBranches', { programId, date })
+      .then(data => { const o = document.getElementById('adminReportOutput'); if (o) o.innerHTML = notReportedPrintHTML(data, programId, date); })
+      .catch(err => toast(err, true)).finally(hideLoading);
+    return;
+  }
+
+  if (category === 'branch') {
+    const branchId = document.getElementById('repBranch').value;
+    if (!branchId) { out.innerHTML = `<div class="empty-state"><p>শাখা নির্বাচন করুন</p></div>`; return; }
+
+    if (mode === 'daily') {
+      const date = document.getElementById('repDate').value;
+      showLoading('লোড হচ্ছে...');
+      apiCall('getBranchDateReport', { branchId, date, programId })
+        .then(data => { const o = document.getElementById('adminReportOutput'); if (o) o.innerHTML = branchDatePrintHTML(data); })
+        .catch(err => toast(err, true)).finally(hideLoading);
+    } else {
+      showLoading('লোড হচ্ছে...');
+      apiCall('getBranchPeriodReport', { branchId, programId })
+        .then(data => { const o = document.getElementById('adminReportOutput'); if (o) o.innerHTML = branchPeriodPrintHTML(data); })
+        .catch(err => toast(err, true)).finally(hideLoading);
+    }
+  } else {
+    if (mode === 'daily') {
+      const date = document.getElementById('repDate').value;
+      showLoading('লোড হচ্ছে...');
+      apiCall('getMainBranchDateReport', { date, programId })
+        .then(data => { const o = document.getElementById('adminReportOutput'); if (o) o.innerHTML = mainBranchDatePrintHTML(data); })
+        .catch(err => toast(err, true)).finally(hideLoading);
+    } else {
+      showLoading('লোড হচ্ছে...');
+      apiCall('getMainBranchPeriodReport', { programId })
+        .then(data => { const o = document.getElementById('adminReportOutput'); if (o) o.innerHTML = mainBranchPeriodPrintHTML(data); })
+        .catch(err => toast(err, true)).finally(hideLoading);
+    }
+  }
+}
+
+/* ---------- প্রিন্ট রিপোর্ট HTML বিল্ডার ---------- */
+
+function printReportHeader(s, metaPairs) {
+  return `
+    <div class="print-report-header">
+      <h2>${esc(s.mainBranchName || 'মূল শাখা')}</h2>
+      ${s.mainBranchAddress ? `<p class="addr">${esc(s.mainBranchAddress)}</p>` : ''}
+    </div>
+    <div class="print-report-meta">
+      ${metaPairs.map(([k, v]) => `<div><b>${esc(k)}:</b> ${esc(v)}</div>`).join('')}
+    </div>
+  `;
+}
+
+function periodLabel(program) {
+  if (!program) return '-';
+  return `${fmtBnDate(program.startDate)} — ${fmtBnDate(program.extendedDate || program.endDate)}`;
+}
+
+// যেসব শাখা রিপোর্ট দেয়নি (নির্দিষ্ট তারিখের)
+function notReportedPrintHTML(data, programId, date) {
+  const program = STATE.programs.find(p => p.id === programId);
+  const missing = data.missing || [];
+  const header = printReportHeader(STATE.settings, [
+    ['কর্মসূচী', programDisplayName(program)],
+    ['রিপোর্ট তারিখ', fmtBnDate(date)],
+    ['মোট শাখা রিপোর্ট দেয়নি', String(missing.length)]
+  ]);
+  return `
+    <div class="panel">
+      ${header}
+      <div class="table-scroll">
+        <table class="data-table report-print-table">
+          <thead><tr><th>#</th><th>শাখার নাম</th></tr></thead>
+          <tbody>
+            ${missing.length ? missing.map((b, i) => `
+              <tr><td>${fmtNum(i + 1)}</td><td>${esc(b.name)}</td></tr>
+            `).join('') : `<tr><td colspan="2" style="text-align:center;padding:20px;color:var(--ink-soft);">সব শাখা রিপোর্ট দিয়েছে</td></tr>`}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+// শাখা ভিত্তিক — দৈনিক
+function branchDatePrintHTML(data) {
+  const b = data.branch, p = data.program, t = data.totals;
+  const header = printReportHeader(STATE.settings, [
+    ['শাখা', b ? b.name : '-'],
+    ['কর্মসূচী', programDisplayName(p)],
+    ['রিপোর্ট তারিখ', fmtBnDate(data.date)]
+  ]);
+  return `
+    <div class="panel">
+      ${header}
+      <div class="table-scroll">
+        <table class="data-table report-print-table">
+          <thead><tr>
+            <th>মোট রুকন</th><th>রুকন অংশগ্রহণ</th>
+            <th>মোট কর্মী</th><th>কর্মী অংশগ্রহণ</th>
+            <th>মোট ইউনিট</th><th>ইউনিট অংশগ্রহণ</th>
+            <th>গ্রুপ</th><th>দাওয়াত</th><th>সহযোগী সদস্য</th>
+          </tr></thead>
+          <tbody>
+            ${data.hasReport ? `
+              <tr>
+                <td>${fmtNum(b ? b.totalRukon : 0)}</td><td>${fmtNum(t.rukonParticipated)}</td>
+                <td>${fmtNum(b ? b.totalKormi : 0)}</td><td>${fmtNum(t.kormiParticipated)}</td>
+                <td>${fmtNum(b ? b.totalUnit : 0)}</td><td>${fmtNum(t.unitParticipated)}</td>
+                <td>${fmtNum(t.groupCount)}</td><td>${fmtNum(t.dawatCount)}</td><td>${fmtNum(t.shohojogiCount)}</td>
+              </tr>
+            ` : `<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--ink-soft);">এই তারিখে কোনো রিপোর্ট পাওয়া যায়নি</td></tr>`}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+// শাখা ভিত্তিক — পক্ষ
+function branchPeriodPrintHTML(data) {
+  const b = data.branch, p = data.program, t = data.total;
+  const header = printReportHeader(STATE.settings, [
+    ['শাখা', b ? b.name : '-'],
+    ['কর্মসূচী', programDisplayName(p)],
+    ['সময়কাল', periodLabel(p)],
+    ['মোট দিন', p ? fmtNum(p.totalDays) : '-']
+  ]);
+  return `
+    <div class="panel">
+      ${header}
+      <div class="table-scroll">
+        <table class="data-table report-print-table">
+          <thead><tr><th>তারিখ</th><th>রুকন</th><th>কর্মী</th><th>ইউনিট</th><th>গ্রুপ</th><th>দাওয়াত</th><th>সহযোগী</th></tr></thead>
+          <tbody>
+            ${data.daily.length ? data.daily.map(d => `
+              <tr><td>${fmtBnDate(d.date)}</td><td>${fmtNum(d.rukonParticipated)}</td><td>${fmtNum(d.kormiParticipated)}</td><td>${fmtNum(d.unitParticipated)}</td><td>${fmtNum(d.groupCount)}</td><td>${fmtNum(d.dawatCount)}</td><td>${fmtNum(d.shohojogiCount)}</td></tr>
+            `).join('') : `<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--ink-soft);">কোনো রিপোর্ট নেই</td></tr>`}
+            <tr class="total-row"><td>সর্বমোট</td><td>${fmtNum(t.totalRukon)}</td><td>${fmtNum(t.totalKormi)}</td><td>${fmtNum(t.totalUnit)}</td><td>${fmtNum(t.totalGroup)}</td><td>${fmtNum(t.totalDawat)}</td><td>${fmtNum(t.totalShohojogi)}</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+// মূল শাখা — দৈনিক
+function mainBranchDatePrintHTML(data) {
+  const s = data.settings || {}, p = data.program, t = data.total;
+  const header = printReportHeader(s, [
+    ['কর্মসূচী', programDisplayName(p)],
+    ['রিপোর্ট তারিখ', fmtBnDate(data.date)]
+  ]);
+  return `
+    <div class="panel">
+      ${header}
+      <div class="table-scroll">
+        <table class="data-table report-print-table">
+          <thead><tr><th>#</th><th>শাখার নাম</th><th>রুকন</th><th>কর্মী</th><th>ইউনিট</th><th>গ্রুপ</th><th>দাওয়াত</th><th>সহযোগী</th></tr></thead>
+          <tbody>
+            ${data.branches.length ? data.branches.map((r, i) => `
+              <tr><td>${fmtNum(i + 1)}</td><td><b>${esc(r.branchName)}</b></td><td>${fmtNum(r.rukonParticipated)}</td><td>${fmtNum(r.kormiParticipated)}</td><td>${fmtNum(r.unitParticipated)}</td><td>${fmtNum(r.groupCount)}</td><td>${fmtNum(r.dawatCount)}</td><td>${fmtNum(r.shohojogiCount)}</td></tr>
+            `).join('') : `<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--ink-soft);">কোনো শাখা যোগ করা হয়নি</td></tr>`}
+            <tr class="total-row"><td colspan="2">সর্বমোট</td><td>${fmtNum(t.rukonParticipated)}</td><td>${fmtNum(t.kormiParticipated)}</td><td>${fmtNum(t.unitParticipated)}</td><td>${fmtNum(t.groupCount)}</td><td>${fmtNum(t.dawatCount)}</td><td>${fmtNum(t.shohojogiCount)}</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+// মূল শাখা — পক্ষ
+function mainBranchPeriodPrintHTML(data) {
+  const s = data.settings || {}, p = data.program, t = data.total;
+  const header = printReportHeader(s, [
+    ['কর্মসূচী', programDisplayName(p)],
+    ['সময়কাল', periodLabel(p)],
+    ['মোট দিন', p ? fmtNum(p.totalDays) : '-']
+  ]);
+  return `
+    <div class="panel">
+      ${header}
+      <div class="table-scroll">
+        <table class="data-table report-print-table">
+          <thead><tr><th>#</th><th>শাখার নাম</th><th>রুকন</th><th>কর্মী</th><th>ইউনিট</th><th>গ্রুপ</th><th>দাওয়াত</th><th>সহযোগী</th></tr></thead>
+          <tbody>
+            ${data.branches.length ? data.branches.map((r, i) => `
+              <tr><td>${fmtNum(i + 1)}</td><td><b>${esc(r.branchName)}</b></td><td>${fmtNum(r.rukonParticipated)}</td><td>${fmtNum(r.kormiParticipated)}</td><td>${fmtNum(r.unitParticipated)}</td><td>${fmtNum(r.groupCount)}</td><td>${fmtNum(r.dawatCount)}</td><td>${fmtNum(r.shohojogiCount)}</td></tr>
+            `).join('') : `<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--ink-soft);">কোনো শাখা যোগ করা হয়নি</td></tr>`}
+            <tr class="total-row"><td colspan="2">সর্বমোট</td><td>${fmtNum(t.rukonParticipated)}</td><td>${fmtNum(t.kormiParticipated)}</td><td>${fmtNum(t.unitParticipated)}</td><td>${fmtNum(t.groupCount)}</td><td>${fmtNum(t.dawatCount)}</td><td>${fmtNum(t.shohojogiCount)}</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+/* ====================================================================
+   শাখা ইউজার: দৈনিক রিপোর্ট এন্ট্রি
+==================================================================== */
+function renderBranchEntry() {
+  el(`
+    <div class="panel">
+      <div class="section-header" style="margin-top:0;"><h3>রিপোর্ট এন্ট্রি</h3></div>
+      <div class="form-grid">
+        <div class="field">
+          <label>তারিখ</label>
+          <input type="date" id="beDate" value="${todayISO()}">
+        </div>
+        <div class="field">
+          <label>কর্মসূচী</label>
+          <select id="beProgram">${STATE.programs.map(p => `<option value="${p.id}" ${p.id===STATE.activeProgramId?'selected':''}>${esc(programDisplayName(p))}</option>`).join('') || '<option value="">কর্মসূচী নেই</option>'}</select>
+        </div>
+        <div class="field">
+          <label>শাখা</label>
+          <select id="beBranch">
+            <option value="">-- নির্বাচন করুন --</option>
+            ${STATE.branches.map(b => `<option value="${b.id}">${esc(b.name)}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+
+      ${reportEntryFieldsHTML('be')}
+
+      <div class="form-actions">
+        <button class="btn btn-primary" onclick="submitBranchEntry()">রিপোর্ট সংরক্ষণ করুন</button>
+      </div>
+    </div>
+
+    <div class="section-header"><h3>আমার সাম্প্রতিক রিপোর্টসমূহ</h3></div>
+    <div id="myReportsBox" class="table-scroll"><div class="empty-state"><p>লোড হচ্ছে...</p></div></div>
+  `);
+  wireBranchAutoFill('beBranch', 'be');
+  loadMyReports();
+}
+
+function submitBranchEntry() {
+  const branchId = document.getElementById('beBranch').value;
+  if (!branchId) { toast('শাখা নির্বাচন করুন', true); return; }
+  const programId = document.getElementById('beProgram').value;
+  if (!programId) { toast('কর্মসূচী নির্বাচন করুন', true); return; }
+
+  const payload = Object.assign({
+    date: document.getElementById('beDate').value,
+    programId,
+    branchIds: JSON.stringify([branchId])
+  }, getReportEntryPayload('be'));
+
+  showLoading('সংরক্ষণ হচ্ছে...');
+  apiCall('saveReport', payload)
+    .then(() => { STATE.dashboardCache = {}; toast('রিপোর্ট সফলভাবে সংরক্ষণ হয়েছে'); renderBranchEntry(); })
+    .catch(err => toast(err, true))
+    .finally(hideLoading);
+}
+
+function loadMyReports() {
+  apiCall('getReports', {}).then(reports => {
+    reports.sort((a, b) => b.date.localeCompare(a.date));
+    reports = reports.slice(0, 30);
+    const box = document.getElementById('myReportsBox');
+    if (!box) return;
+    box.innerHTML = `
+      <table class="data-table recent-reports-table">
+        <thead><tr><th>তারিখ</th><th>শাখা</th><th>রুকন</th><th>কর্মী</th><th>ইউনিট</th><th>গ্রুপ</th><th>দাওয়াত</th><th>সহযোগী</th></tr></thead>
+        <tbody>
+          ${reports.length ? reports.map(r => `
+            <tr><td>${fmtBnDate(r.date)}</td><td class="branch-col">${esc(r.branchName)}</td><td>${fmtNum(r.rukonParticipated)}</td><td>${fmtNum(r.kormiParticipated)}</td><td>${fmtNum(r.unitParticipated)}</td><td>${fmtNum(r.groupCount)}</td><td>${fmtNum(r.dawatCount)}</td><td>${fmtNum(r.shohojogiCount)}</td></tr>
+          `).join('') : `<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--ink-soft);">কোনো রিপোর্ট নেই</td></tr>`}
+        </tbody>
+      </table>`;
+  }).catch(err => toast(err, true));
+}
+
+/* ====================================================================
+   শাখা ইউজার: রিপোর্ট প্রিন্ট
+==================================================================== */
+function renderBranchPrint() {
+  el(`
+    <div class="panel no-print">
+      <div class="section-header" style="margin-top:0;"><h3>রিপোর্ট প্রিন্ট</h3></div>
+      <div class="form-grid">
+        <div class="field">
+          <label>শাখা</label>
+          <select id="bpBranch">
+            <option value="">-- নির্বাচন করুন --</option>
+            ${STATE.branches.map(b => `<option value="${b.id}">${esc(b.name)}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field">
+          <label>কর্মসূচী</label>
+          <select id="bpProgram">${STATE.programs.map(p => `<option value="${p.id}" ${p.id===STATE.activeProgramId?'selected':''}>${esc(programDisplayName(p))}</option>`).join('') || '<option value="">নেই</option>'}</select>
+        </div>
+        <div class="field">
+          <label>ধরন</label>
+          <select id="bpMode">
+            <option value="daily">দৈনিক (নির্দিষ্ট তারিখ)</option>
+            <option value="period">পক্ষ (পুরো কর্মসূচীর সময়কাল)</option>
+          </select>
+        </div>
+        <div class="field" id="bpDateWrap">
+          <label>তারিখ</label>
+          <input type="date" id="bpDate" value="${todayISO()}">
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-primary" onclick="loadBranchPrintReport()">রিপোর্ট দেখুন</button>
+        <button class="btn btn-outline" onclick="window.print()">প্রিন্ট করুন</button>
+      </div>
+    </div>
+    <div id="bpOutput"></div>
+  `);
+
+  document.getElementById('bpMode').onchange = function () {
+    document.getElementById('bpDateWrap').style.display = this.value === 'daily' ? 'block' : 'none';
+  };
+
+  loadBranchPrintReport();
+}
+
+function loadBranchPrintReport() {
+  const branchId = document.getElementById('bpBranch').value;
+  const programId = document.getElementById('bpProgram').value;
+  const mode = document.getElementById('bpMode').value;
+  const out = document.getElementById('bpOutput');
+  if (!out) return;
+
+  if (!branchId) { out.innerHTML = `<div class="empty-state"><p>শাখা নির্বাচন করুন</p></div>`; return; }
+  if (!programId) { out.innerHTML = `<div class="empty-state"><p>কোনো কর্মসূচী নেই</p></div>`; return; }
+
+  if (mode === 'daily') {
+    const date = document.getElementById('bpDate').value;
+    showLoading('লোড হচ্ছে...');
+    apiCall('getBranchDateReport', { branchId, date, programId })
+      .then(data => { const o = document.getElementById('bpOutput'); if (o) o.innerHTML = branchDatePrintHTML(data); })
+      .catch(err => toast(err, true))
+      .finally(hideLoading);
+  } else {
+    showLoading('লোড হচ্ছে...');
+    apiCall('getBranchPeriodReport', { branchId, programId })
+      .then(data => { const o = document.getElementById('bpOutput'); if (o) o.innerHTML = branchPeriodPrintHTML(data); })
+      .catch(err => toast(err, true))
+      .finally(hideLoading);
+  }
+}
+
+/* ====================================================================
+   ইনিশিয়ালাইজেশন
+   নোট: ইচ্ছাকৃতভাবে কোনো সেশন সংরক্ষণ করা হয় না — লগআউট না করলেও
+   প্রতিবার পেইজ খোলার সময় (রিফ্রেশ/নতুন ট্যাব/পুনরায় প্রবেশ) অবশ্যই
+   লগইন ফরম দেখাবে এবং লগইন করতে হবে।
+==================================================================== */
+apiCall('getLoginInfo').then(info => {
+  const hint = document.getElementById('loginMainBranchHint');
+  if (hint && info && info.mainBranchName) hint.textContent = info.mainBranchName;
+}).catch(() => { /* লগইন পেইজে এই তথ্য না পেলেও সমস্যা নেই */ });
+
+// লগইন করার আগেই bootstrap ডাটা (settings/programs/branches) আনা শুরু করে দেওয়া হয়,
+// যাতে লগইন সফল হওয়ার সাথে সাথে ড্যাশবোর্ড দ্রুত দেখা যায় (দুইটা রিকোয়েস্ট সমান্তরালে চলে, একটার পর একটা নয়)
+let bootstrapPrefetchPromise = apiCall('getBootstrap').catch(() => null);
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('loginScreen').style.display !== 'none') {
+    doLogin();
+  }
+});
+</script>
+</body>
+</html>
