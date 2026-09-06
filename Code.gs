@@ -497,7 +497,6 @@ function getBootstrap() {
       totalKormi: Number(b.totalKormi) || 0,
       totalUnit: Number(b.totalUnit) || 0
     }))
-    .sort((a, b) => String(a.name).localeCompare(String(b.name), 'bn'));
 
   const result = { settings, programs, branches };
   cacheSetJSON(cacheKey, result);
