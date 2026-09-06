@@ -557,8 +557,7 @@ function getBranches() {
         totalRukon: Number(b.totalRukon) || 0,
         totalKormi: Number(b.totalKormi) || 0,
         totalUnit: Number(b.totalUnit) || 0
-      }))
-      .sort((a, b) => String(a.name).localeCompare(String(b.name), 'bn'));
+      }));
   });
 }
 
