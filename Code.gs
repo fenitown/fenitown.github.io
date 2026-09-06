@@ -865,8 +865,7 @@ function getMainBranchDateReport(params) {
     const settings = getRawSettings();
     const programs = getFormattedPrograms();
     const program = programs.find(p => String(p.id) === String(programId));
-    const branches = getCachedSheetObjects(SHEET_NAMES.BRANCHES)
-      .sort((a, b) => String(a.name).localeCompare(String(b.name), 'bn'));
+    const branches = getCachedSheetObjects(SHEET_NAMES.BRANCHES);
 
     let reports = getCachedSheetObjects(SHEET_NAMES.REPORTS).map(r => ({ ...r, date: formatDateStr(r.date) }));
     reports = reports.filter(r => r.date === date);
@@ -909,8 +908,7 @@ function getMainBranchPeriodReport(params) {
     const settings = getRawSettings();
     const programs = getFormattedPrograms();
     const program = programs.find(p => String(p.id) === String(programId));
-    const branches = getCachedSheetObjects(SHEET_NAMES.BRANCHES)
-      .sort((a, b) => String(a.name).localeCompare(String(b.name), 'bn'));
+    const branches = getCachedSheetObjects(SHEET_NAMES.BRANCHES);
 
     let reports = getCachedSheetObjects(SHEET_NAMES.REPORTS).map(r => ({ ...r, date: formatDateStr(r.date) }));
     reports = reports.filter(r => String(r.programId) === String(programId));
