@@ -295,11 +295,36 @@ function findRowIndexById(sheetName, id) {
   return -1;
 }
 
+const APP_TIMEZONE = 'Asia/Dhaka';
+
 function formatDateStr(d) {
+  if (d === null || d === undefined || d === '') return '';
+
+  // Date object হলে Dhaka timezone অনুযায়ী format
   if (Object.prototype.toString.call(d) === '[object Date]') {
-    return Utilities.formatDate(d, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+    return Utilities.formatDate(d, APP_TIMEZONE, 'yyyy-MM-dd');
   }
-  return String(d);
+
+  // yyyy-MM-dd string হলে কোনো conversion নয়
+  const s = String(d).trim();
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+    return s;
+  }
+
+  // অন্য কোনো date string হলে Date হিসেবে parse না করে
+  // প্রথমে yyyy-MM-dd pattern খোঁজা
+  const match = s.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+
+  if (match) {
+    return [
+      match[1],
+      String(match[2]).padStart(2, '0'),
+      String(match[3]).padStart(2, '0')
+    ].join('-');
+  }
+
+  return s;
 }
 
 // সব জায়গায় কর্মসূচীর তারিখ সঠিকভাবে ফরম্যাট করা অবস্থায় পাওয়ার জন্য শেয়ার্ড হেল্পার
@@ -689,7 +714,7 @@ function getDashboard(params) {
     reports = reports.filter(r => String(r.programId) === String(activeProgram.id));
   }
 
-  const today = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd');
+  const today = Utilities.formatDate(new Date(), APP_TIMEZONE, 'yyyy-MM-dd');
   const todayReports = reports.filter(r => r.date === today);
 
   const reportedBranchIds = [...new Set(reports.map(r => String(r.branchId)))];
