@@ -295,32 +295,43 @@ function findRowIndexById(sheetName, id) {
   return -1;
 }
 
+// ==================== DATE / TIMEZONE ====================
+
 const APP_TIMEZONE = 'Asia/Dhaka';
 
+/**
+ * সব তারিখ yyyy-MM-dd আকারে রাখে।
+ * বাংলাদেশ সময় অনুযায়ী কাজ করবে।
+ *
+ * গুরুত্বপূর্ণ:
+ * yyyy-MM-dd string কখনো Date হিসেবে parse করা হবে না।
+ * এতে ১ সেপ্টেম্বর → ৩১ আগস্ট হওয়ার সমস্যা হবে না।
+ */
 function formatDateStr(d) {
-  if (d === null || d === undefined || d === '') return '';
+  if (d === null || d === undefined || d === '') {
+    return '';
+  }
 
-  // Date object হলে Dhaka timezone অনুযায়ী format
+  // Google Sheet থেকে Date object এলে
   if (Object.prototype.toString.call(d) === '[object Date]') {
     return Utilities.formatDate(d, APP_TIMEZONE, 'yyyy-MM-dd');
   }
 
-  // yyyy-MM-dd string হলে কোনো conversion নয়
   const s = String(d).trim();
 
+  // আগে থেকেই সঠিক ISO date হলে 그대로 ফেরত দিন
   if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
     return s;
   }
 
-  // অন্য কোনো date string হলে Date হিসেবে parse না করে
-  // প্রথমে yyyy-MM-dd pattern খোঁজা
-  const match = s.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+  // yyyy/MM/dd বা yyyy-MM-dd HH:mm:ss ধরনের string
+  const m = s.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
 
-  if (match) {
+  if (m) {
     return [
-      match[1],
-      String(match[2]).padStart(2, '0'),
-      String(match[3]).padStart(2, '0')
+      m[1],
+      String(m[2]).padStart(2, '0'),
+      String(m[3]).padStart(2, '0')
     ].join('-');
   }
 
@@ -714,7 +725,11 @@ function getDashboard(params) {
     reports = reports.filter(r => String(r.programId) === String(activeProgram.id));
   }
 
-  const today = Utilities.formatDate(new Date(), APP_TIMEZONE, 'yyyy-MM-dd');
+  const today = Utilities.formatDate(
+  new Date(),
+  APP_TIMEZONE,
+  'yyyy-MM-dd'
+);
   const todayReports = reports.filter(r => r.date === today);
 
   const reportedBranchIds = [...new Set(reports.map(r => String(r.branchId)))];
