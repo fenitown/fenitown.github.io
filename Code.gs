@@ -859,12 +859,13 @@ function sumFieldGeneric(arr, field) {
 // শাখা ভিত্তিক — দৈনিক (নির্দিষ্ট শাখার নির্দিষ্ট তারিখের রিপোর্ট)
 function getBranchDateReport(params) {
   const branchId = params.branchId;
-  const date = params.date;
+  const date = String(params.date || '').trim();
   const programId = params.programId;
 
   return withCache('branchDate', [branchId, date, programId].join('|'), () => {
     const branchesRaw = getCachedSheetObjects(SHEET_NAMES.BRANCHES);
     const branchRaw = branchesRaw.find(b => String(b.id) === String(branchId));
+
     const branch = branchRaw ? {
       id: branchRaw.id,
       name: branchRaw.name,
@@ -876,10 +877,21 @@ function getBranchDateReport(params) {
     const programs = getFormattedPrograms();
     const program = programs.find(p => String(p.id) === String(programId));
 
-    let reports = getCachedSheetObjects(SHEET_NAMES.REPORTS).map(r => ({ ...r, date: formatDateStr(r.date) }));
-    reports = reports.filter(r => String(r.branchId) === String(branchId) && r.date === date);
+    let reports = getCachedSheetObjects(SHEET_NAMES.REPORTS)
+      .map(r => ({
+        ...r,
+        date: formatDateStr(r.date)
+      }));
+
+reports = reports.filter(r =>
+  String(r.branchId) === String(branchId) &&
+  String(r.date).trim() === date
+);
+
     if (programId) {
-      reports = reports.filter(r => String(r.programId) === String(programId));
+      reports = reports.filter(r =>
+        String(r.programId) === String(programId)
+      );
     }
 
     const totals = {
@@ -891,13 +903,19 @@ function getBranchDateReport(params) {
       shohojogiCount: sumFieldGeneric(reports, 'shohojogiCount')
     };
 
-    return { branch, program, date, totals, hasReport: reports.length > 0 };
+    return {
+      branch,
+      program,
+      date: date,
+      totals,
+      hasReport: reports.length > 0
+    };
   });
 }
 
 // মূল শাখা — দৈনিক (নির্দিষ্ট তারিখের সকল শাখার রিপোর্ট)
 function getMainBranchDateReport(params) {
-  const date = params.date;
+  const date = String(params.date || '').trim();
   const programId = params.programId;
 
   return withCache('mainDate', [date, programId].join('|'), () => {
@@ -907,7 +925,7 @@ function getMainBranchDateReport(params) {
     const branches = getCachedSheetObjects(SHEET_NAMES.BRANCHES);
 
     let reports = getCachedSheetObjects(SHEET_NAMES.REPORTS).map(r => ({ ...r, date: formatDateStr(r.date) }));
-    reports = reports.filter(r => r.date === date);
+    reports = reports.filter(r => String(r.date).trim() === date);
     if (programId) {
       reports = reports.filter(r => String(r.programId) === String(programId));
     }

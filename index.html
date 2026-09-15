@@ -895,6 +895,28 @@ function todayISO() {
   return `${year}-${month}-${day}`;
 }
 
+function normalizeReportDate(value) {
+  if (!value) return '';
+
+  const s = String(value).trim();
+
+  // HTML date input-এর স্বাভাবিক yyyy-MM-dd
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+    return s;
+  }
+
+  // যদি কোনো কারণে Date string আসে, UTC নয় — local date ব্যবহার
+  const d = new Date(s);
+  if (isNaN(d.getTime())) return '';
+
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+}
+
+
 // কর্মসূচীর নাম সবসময় "গণসংযোগ পক্ষ (২০২৬)" এভাবে দেখানোর জন্য শেয়ার্ড হেল্পার
 function programDisplayName(program) {
   if (!program) return '-';
@@ -1551,7 +1573,7 @@ function loadAdminReport() {
   if (!programId) { out.innerHTML = `<div class="empty-state"><p>কোনো কর্মসূচী নেই</p></div>`; return; }
 
   if (category === 'notReported') {
-    const date = document.getElementById('repDate').value;
+    const date = normalizeReportDate(document.getElementById('repDate').value);
     showLoading('লোড হচ্ছে...');
     apiCall('getMissingBranches', { programId, date })
       .then(data => { const o = document.getElementById('adminReportOutput'); if (o) o.innerHTML = notReportedPrintHTML(data, programId, date); })
@@ -1564,7 +1586,7 @@ function loadAdminReport() {
     if (!branchId) { out.innerHTML = `<div class="empty-state"><p>শাখা নির্বাচন করুন</p></div>`; return; }
 
     if (mode === 'daily') {
-      const date = document.getElementById('repDate').value;
+      const date = normalizeReportDate(document.getElementById('repDate').value);
       showLoading('লোড হচ্ছে...');
       apiCall('getBranchDateReport', { branchId, date, programId })
         .then(data => { const o = document.getElementById('adminReportOutput'); if (o) o.innerHTML = branchDatePrintHTML(data); })
@@ -1577,7 +1599,7 @@ function loadAdminReport() {
     }
   } else {
     if (mode === 'daily') {
-      const date = document.getElementById('repDate').value;
+      const date = normalizeReportDate(document.getElementById('repDate').value);
       showLoading('লোড হচ্ছে...');
       apiCall('getMainBranchDateReport', { date, programId })
         .then(data => { const o = document.getElementById('adminReportOutput'); if (o) o.innerHTML = mainBranchDatePrintHTML(data); })
