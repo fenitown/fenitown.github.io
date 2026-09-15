@@ -905,15 +905,18 @@ function normalizeReportDate(value) {
     return s;
   }
 
-  // যদি কোনো কারণে Date string আসে, UTC নয় — local date ব্যবহার
-  const d = new Date(s);
-  if (isNaN(d.getTime())) return '';
+  // অন্য date string হলে Date object তৈরি না করে date অংশ বের করুন
+  const m2 = s.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
 
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
+  if (m2) {
+    return [
+      m2[1],
+      String(m2[2]).padStart(2, '0'),
+      String(m2[3]).padStart(2, '0')
+    ].join('-');
+  }
 
-  return `${year}-${month}-${day}`;
+  return '';
 }
 
 
