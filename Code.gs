@@ -143,6 +143,9 @@ function ensureSheetsExist() {
   } else {
     migrateProgramsYearIfNeeded(programsSh);
   }
+  // তারিখ কলামগুলো Plain Text ফরম্যাটে রাখা হয় যাতে Google Sheets কখনো এগুলোকে
+  // স্বয়ংক্রিয়ভাবে Date অবজেক্টে রূপান্তর না করে (এতে ১ দিন এদিক-ওদিক দেখানোর সমস্যা হতো)
+  migrateDateColumnsToPlainTextIfNeeded(programsSh, ['startDate', 'endDate', 'extendedDate']);
 
   let branchesSh = ss.getSheetByName(SHEET_NAMES.BRANCHES);
   if (!branchesSh) {
@@ -160,6 +163,7 @@ function ensureSheetsExist() {
     migrateReportsSheetIfNeeded(reportsSh);
     migrateReportsGroupCountIfNeeded(reportsSh);
   }
+  migrateDateColumnsToPlainTextIfNeeded(reportsSh, ['date']);
 
   if (!ss.getSheetByName(SHEET_NAMES.USERS)) {
     const sh = ss.insertSheet(SHEET_NAMES.USERS);
@@ -262,6 +266,49 @@ function migrateReportsGroupCountIfNeeded(sh) {
   }
 }
 
+// তারিখ কলামে টাইপ/পেস্ট করা বা আগে সেভ হওয়া মান Google Sheets স্বয়ংক্রিয়ভাবে Date অবজেক্টে
+// রূপান্তর করে ফেলতে পারে, এবং সেই Date স্প্রেডশিটের নিজস্ব টাইমজোন অনুযায়ী সংরক্ষিত হয় —
+// যা APP_TIMEZONE এর সাথে না মিললে রিপোর্টে তারিখ ১ দিন আগে/পরে দেখাতে পারে
+// (যেমন শীটে ১ সেপ্টেম্বর থাকলেও রিপোর্টে ৩১ আগস্ট দেখানো)।
+// এই ফাংশন কলামগুলো Plain Text ফরম্যাটে বদলে দেয় (ভবিষ্যতে আর কখনো এই সমস্যা হবে না) এবং
+// ইতিমধ্যে Date হয়ে যাওয়া সেলগুলোকে শীটে যেভাবে দেখাচ্ছে ঠিক সেই তারিখ অনুযায়ী প্লেইন টেক্সটে ফিরিয়ে আনে।
+// আগে থেকেই প্লেইন টেক্সট থাকা সেলগুলো স্পর্শ করা হয় না, তাই বারবার চললেও সমস্যা নেই।
+function migrateDateColumnsToPlainTextIfNeeded(sh, columnNames) {
+  const lastCol = sh.getLastColumn();
+  if (lastCol < 1) return;
+  const headers = sh.getRange(1, 1, 1, lastCol).getValues()[0];
+
+  columnNames.forEach(colName => {
+    const idx = headers.indexOf(colName); // 0-indexed
+    if (idx === -1) return;
+    const col = idx + 1; // 1-indexed কলাম নম্বর
+
+    const lastRow = sh.getLastRow();
+    if (lastRow >= 2) {
+      const rows = lastRow - 1;
+      const range = sh.getRange(2, col, rows, 1);
+      const values = range.getValues();
+      let changed = false;
+      const fixed = values.map(row => {
+        const v = row[0];
+        if (Object.prototype.toString.call(v) === '[object Date]') {
+          changed = true;
+          return [formatDateStr(v)];
+        }
+        return [v];
+      });
+      range.setNumberFormat('@'); // ফরম্যাট আগে বদলাতে হয়, নাহলে setValues আবার Date বানিয়ে ফেলবে
+      if (changed) range.setValues(fixed);
+    }
+
+    // নিচের ফাঁকা রো-গুলোও প্লেইন টেক্সট রাখা হলো, যাতে ভবিষ্যতে নতুন এন্ট্রিও Date-এ রূপান্তরিত না হয়
+    const maxRows = sh.getMaxRows();
+    if (maxRows > lastRow) {
+      sh.getRange(lastRow + 1, col, maxRows - lastRow, 1).setNumberFormat('@');
+    }
+  });
+}
+
 // ==================== হেল্পার ====================
 
 function sheetToObjects(sheetName) {
@@ -297,11 +344,28 @@ function findRowIndexById(sheetName, id) {
 
 // ==================== DATE / TIMEZONE ====================
 
-const APP_TIMEZONE = 'Asia/Dhaka';
+const APP_TIMEZONE = 'Asia/Dhaka'; // শুধু "আজ" হিসাব করতে ব্যবহৃত হয়, তারিখ-কলাম পড়ার জন্য নয়
+
+// স্প্রেডশিটের নিজস্ব টাইমজোন (File > Settings এ যা সেট করা আছে)। কোনো সেল যদি (টাইপ/পেস্ট
+// করার কারণে) Date অবজেক্ট হয়ে যায়, Google Sheets সবসময় সেই মান এই টাইমজোন অনুযায়ীই দেখায় —
+// তাই সেই একই টাইমজোন দিয়ে ফেরত ফরম্যাট করলে শীটে যা দেখা যাচ্ছে ঠিক সেই তারিখই পাওয়া যাবে
+// (আগে হার্ডকোড করা APP_TIMEZONE ব্যবহার হতো, যা স্প্রেডশিটের প্রকৃত টাইমজোনের সাথে না মিললে
+// তারিখ ১ দিন আগে/পরে দেখানোর সমস্যা করত)।
+let _sheetTzCache = null;
+function getSheetTimeZone() {
+  if (!_sheetTzCache) {
+    try {
+      _sheetTzCache = getSS().getSpreadsheetTimeZone();
+    } catch (e) {
+      _sheetTzCache = APP_TIMEZONE;
+    }
+  }
+  return _sheetTzCache;
+}
 
 /**
  * সব তারিখ yyyy-MM-dd আকারে রাখে।
- * বাংলাদেশ সময় অনুযায়ী কাজ করবে।
+ * শীটে যেভাবে দেখা যাচ্ছে ঠিক সেভাবেই ফেরত দেয় (স্প্রেডশিটের নিজস্ব টাইমজোন অনুযায়ী)।
  *
  * গুরুত্বপূর্ণ:
  * yyyy-MM-dd string কখনো Date হিসেবে parse করা হবে না।
@@ -314,7 +378,7 @@ function formatDateStr(d) {
 
   // Google Sheet থেকে Date object এলে
   if (Object.prototype.toString.call(d) === '[object Date]') {
-    return Utilities.formatDate(d, APP_TIMEZONE, 'yyyy-MM-dd');
+    return Utilities.formatDate(d, getSheetTimeZone(), 'yyyy-MM-dd');
   }
 
   const s = String(d).trim();
@@ -350,28 +414,36 @@ function getFormattedPrograms() {
 }
 
 // ==================== ক্যাশ (দ্রুত লোডের জন্য) ====================
-// ক্যাশের প্রতিটি key-তে ভার্সন নম্বর জোড়া থাকে (versionedKey)। কোনো ডাটা সেভ/ডিলিট হলেই
-// ভার্সন বেড়ে যায়, ফলে সব পুরনো ক্যাশ সাথে সাথে অকার্যকর হয়ে যায় — তাই TTL যত বড়ই হোক,
-// ডাটা কখনো পুরনো/ভুল দেখাবে না। TTL বড় রাখলে শুধু বেশি কাজে লাগে (বেশিক্ষণ ক্যাশ হিট পাওয়া যায়),
-// তাই এটা ৫ মিনিট রাখা হয়েছে দ্রুততার জন্য।
+// প্রতিটি শীটের জন্য আলাদা ভার্সন নম্বর রাখা হয় (আগে সব শীটের জন্য একটাই ভার্সন ছিল —
+// তার মানে একটা রিপোর্ট সেভ করলেই Settings/Programs/Branches এর মতো অপরিবর্তিত ডাটার
+// ক্যাশও অকারণে বাতিল হয়ে যেত, ফলে প্রতিটি রিপোর্ট এন্ট্রির পর পুরো অ্যাপকেই আবার শীট থেকে
+// সব পড়তে হতো — এটাই ছিল ধীরগতির প্রধান কারণ)। এখন শুধু যেই শীট পরিবর্তন হয়েছে তারই
+// ভার্সন বাড়ে, বাকি সব ক্যাশ অক্ষত থাকে — তাই ঘন ঘন রিপোর্ট এন্ট্রি করলেও বুটস্ট্র্যাপ/
+// প্রোগ্রাম/শাখার মতো কম পরিবর্তনশীল ডাটা প্রায় সবসময় ক্যাশ থেকেই সাথে সাথে চলে আসে।
 const CACHE_TTL_SECONDS = 300;
 
-function getDataVersion() {
+function getVersion(sheetName) {
   const cache = CacheService.getScriptCache();
-  let v = cache.get('dataVersion');
+  const key = 'v_' + sheetName;
+  let v = cache.get(key);
   if (!v) {
     v = '1';
-    cache.put('dataVersion', v, 21600);
+    cache.put(key, v, 21600);
   }
   return v;
 }
 
-function bumpDataVersion() {
+function bumpVersion(sheetName) {
   try {
     const cache = CacheService.getScriptCache();
-    const v = Number(getDataVersion()) + 1;
-    cache.put('dataVersion', String(v), 21600);
+    const key = 'v_' + sheetName;
+    const v = Number(getVersion(sheetName)) + 1;
+    cache.put(key, String(v), 21600);
   } catch (e) { /* ক্যাশ ব্যর্থ হলেও অ্যাপ যেন থেমে না যায় */ }
+}
+
+function bumpAllVersions() {
+  Object.keys(SHEET_NAMES).forEach(k => bumpVersion(SHEET_NAMES[k]));
 }
 
 function cacheGetJSON(key) {
@@ -391,14 +463,17 @@ function cacheSetJSON(key, value) {
   } catch (e) { /* বড় ডাটার কারণে ক্যাশ ব্যর্থ হলেও সমস্যা নেই, শুধু ক্যাশ ছাড়া কাজ করবে */ }
 }
 
-function versionedKey(prefix, suffix) {
-  return prefix + '_v' + getDataVersion() + '_' + (suffix || 'x');
+// deps: এই ক্যাশ-এন্ট্রি কোন কোন শীটের উপর নির্ভরশীল তার তালিকা (SHEET_NAMES.* থেকে) —
+// শুধু সেই শীটগুলোর ভার্সন দিয়েই কী তৈরি হয়, তাই অন্য কোনো শীট পরিবর্তন হলে এই ক্যাশ নষ্ট হয় না
+function versionedKey(prefix, deps, suffix) {
+  const vs = deps.map(getVersion).join('.');
+  return prefix + '_v' + vs + '_' + (suffix || 'x');
 }
 
 // যেকোনো "শুধু পড়ার" ফাংশনকে ক্যাশ দিয়ে মুড়িয়ে দেওয়ার শর্টকাট —
 // একই ভার্সনে একই ইনপুটের জন্য দ্বিতীয়বার শীট না পড়ে সরাসরি ক্যাশ থেকে উত্তর দেয়
-function withCache(prefix, keySuffix, computeFn) {
-  const cacheKey = versionedKey(prefix, keySuffix);
+function withCache(prefix, deps, keySuffix, computeFn) {
+  const cacheKey = versionedKey(prefix, deps, keySuffix);
   const cached = cacheGetJSON(cacheKey);
   if (cached !== null) {
     return { success: true, data: cached };
@@ -411,8 +486,9 @@ function withCache(prefix, keySuffix, computeFn) {
 // কাঁচা শীট-ডাটা (sheetToObjects এর ফলাফল) নিজেও ক্যাশ করা থাকে — এতে করে কম্পিউটেড ক্যাশ
 // (যেমন কোনো নির্দিষ্ট কর্মসূচীর ড্যাশবোর্ড) মিস হলেও, সেই একই শীট আগের কোনো রিকোয়েস্টে
 // পড়া হয়ে থাকলে আবার শীট থেকে না পড়ে ক্যাশ থেকেই কাজ চালানো যায় — এটা সবচেয়ে বড় স্পিড বুস্ট।
+// শুধু ওই একটা শীটের ভার্সনের উপর নির্ভর করে, তাই অন্য শীট পরিবর্তন হলে এটা এখনো ক্যাশ থেকেই আসবে।
 function getCachedSheetObjects(sheetName) {
-  const cacheKey = versionedKey('rawsheet', sheetName);
+  const cacheKey = versionedKey('rawsheet', [sheetName], sheetName);
   const cached = cacheGetJSON(cacheKey);
   if (cached !== null) return cached;
   const data = sheetToObjects(sheetName);
@@ -420,10 +496,10 @@ function getCachedSheetObjects(sheetName) {
   return data;
 }
 
-// রিফ্রেশ বাটনের জন্য — জোর করে ভার্সন বাড়িয়ে সব ক্যাশ সাথে সাথে অকার্যকর করে দেয়,
+// রিফ্রেশ বাটনের জন্য — জোর করে সব শীটের ভার্সন বাড়িয়ে সব ক্যাশ সাথে সাথে অকার্যকর করে দেয়,
 // ফলে পরের রিকোয়েস্টেই একদম তাজা ডাটা শীট থেকে আনা হবে
 function forceRefreshData() {
-  bumpDataVersion();
+  bumpAllVersions();
   return { success: true, message: 'রিফ্রেশ হয়েছে' };
 }
 
@@ -497,13 +573,13 @@ function saveSettings(params) {
       sh.appendRow([key, updates[key]]);
     }
   });
-  bumpDataVersion();
+  bumpVersion(SHEET_NAMES.SETTINGS);
   return { success: true, message: 'সেটিংস সংরক্ষণ হয়েছে' };
 }
 
 // লগইন পেইজে দেখানোর জন্য শুধু মূল শাখার নাম — লগইনের আগেই প্রয়োজন, তাই আলাদা হালকা এন্ডপয়েন্ট
 function getLoginInfo() {
-  const cacheKey = versionedKey('loginInfo', 'x');
+  const cacheKey = versionedKey('loginInfo', [SHEET_NAMES.SETTINGS], 'x');
   const cached = cacheGetJSON(cacheKey);
   if (cached) {
     return { success: true, data: cached };
@@ -517,7 +593,7 @@ function getLoginInfo() {
 // লগইনের পর একবারে সেটিংস + কর্মসূচী + শাখা — সব একসাথে পাঠানো হয়,
 // যাতে ৩টি আলাদা রিকোয়েস্টের বদলে মাত্র ১টি রিকোয়েস্টেই অ্যাপ শুরু হতে পারে (দ্রুত লোড)
 function getBootstrap() {
-  const cacheKey = versionedKey('bootstrap', 'all');
+  const cacheKey = versionedKey('bootstrap', [SHEET_NAMES.SETTINGS, SHEET_NAMES.PROGRAMS, SHEET_NAMES.BRANCHES], 'all');
   const cached = cacheGetJSON(cacheKey);
   if (cached) {
     return { success: true, data: cached };
@@ -549,7 +625,7 @@ function calcTotalDays(startDate, endDate, extendedDate) {
 }
 
 function getPrograms() {
-  return withCache('programs', 'x', () => getFormattedPrograms());
+  return withCache('programs', [SHEET_NAMES.PROGRAMS], 'x', () => getFormattedPrograms());
 }
 
 function saveProgram(params) {
@@ -563,12 +639,12 @@ function saveProgram(params) {
     sh.getRange(rowIdx, 2, 1, 6).setValues([[
       params.name, year, params.startDate, params.endDate, params.extendedDate || '', totalDays
     ]]);
-    bumpDataVersion();
+    bumpVersion(SHEET_NAMES.PROGRAMS);
     return { success: true, message: 'কর্মসূচী আপডেট হয়েছে' };
   } else {
     const id = generateId();
     sh.appendRow([id, params.name, year, params.startDate, params.endDate, params.extendedDate || '', totalDays, new Date()]);
-    bumpDataVersion();
+    bumpVersion(SHEET_NAMES.PROGRAMS);
     return { success: true, message: 'কর্মসূচী যোগ হয়েছে', data: { id } };
   }
 }
@@ -577,14 +653,14 @@ function deleteProgram(params) {
   const rowIdx = findRowIndexById(SHEET_NAMES.PROGRAMS, params.id);
   if (rowIdx === -1) return { success: false, message: 'কর্মসূচী পাওয়া যায়নি' };
   getSS().getSheetByName(SHEET_NAMES.PROGRAMS).deleteRow(rowIdx);
-  bumpDataVersion();
+  bumpVersion(SHEET_NAMES.PROGRAMS);
   return { success: true, message: 'কর্মসূচী মুছে ফেলা হয়েছে' };
 }
 
 // ==================== শাখা ====================
 
 function getBranches() {
-  return withCache('branches', 'x', () => {
+  return withCache('branches', [SHEET_NAMES.BRANCHES], 'x', () => {
     return getCachedSheetObjects(SHEET_NAMES.BRANCHES)
       .map(b => ({
         id: b.id,
@@ -606,12 +682,12 @@ function saveBranch(params) {
     const rowIdx = findRowIndexById(SHEET_NAMES.BRANCHES, params.id);
     if (rowIdx === -1) return { success: false, message: 'শাখা পাওয়া যায়নি' };
     sh.getRange(rowIdx, 2, 1, 4).setValues([[params.name, totalRukon, totalKormi, totalUnit]]);
-    bumpDataVersion();
+    bumpVersion(SHEET_NAMES.BRANCHES);
     return { success: true, message: 'শাখা আপডেট হয়েছে' };
   } else {
     const id = generateId();
     sh.appendRow([id, params.name, totalRukon, totalKormi, totalUnit, new Date()]);
-    bumpDataVersion();
+    bumpVersion(SHEET_NAMES.BRANCHES);
     return { success: true, message: 'শাখা যোগ হয়েছে', data: { id } };
   }
 }
@@ -620,7 +696,7 @@ function deleteBranch(params) {
   const rowIdx = findRowIndexById(SHEET_NAMES.BRANCHES, params.id);
   if (rowIdx === -1) return { success: false, message: 'শাখা পাওয়া যায়নি' };
   getSS().getSheetByName(SHEET_NAMES.BRANCHES).deleteRow(rowIdx);
-  bumpDataVersion();
+  bumpVersion(SHEET_NAMES.BRANCHES);
   return { success: true, message: 'শাখা মুছে ফেলা হয়েছে' };
 }
 
@@ -632,7 +708,7 @@ function getReports(params) {
     params.fromDate || '', params.toDate || ''
   ].join('|');
 
-  return withCache('reports', keySuffix, () => {
+  return withCache('reports', [SHEET_NAMES.REPORTS], keySuffix, () => {
     let reports = getCachedSheetObjects(SHEET_NAMES.REPORTS).map(r => ({
       ...r,
       date: formatDateStr(r.date)
@@ -689,7 +765,7 @@ function saveReport(params) {
     results.push(id);
   });
 
-  bumpDataVersion();
+  bumpVersion(SHEET_NAMES.REPORTS);
   return { success: true, message: 'রিপোর্ট সংরক্ষণ হয়েছে', data: { ids: results } };
 }
 
@@ -697,7 +773,7 @@ function deleteReport(params) {
   const rowIdx = findRowIndexById(SHEET_NAMES.REPORTS, params.id);
   if (rowIdx === -1) return { success: false, message: 'রিপোর্ট পাওয়া যায়নি' };
   getSS().getSheetByName(SHEET_NAMES.REPORTS).deleteRow(rowIdx);
-  bumpDataVersion();
+  bumpVersion(SHEET_NAMES.REPORTS);
   return { success: true, message: 'রিপোর্ট মুছে ফেলা হয়েছে' };
 }
 
@@ -705,7 +781,7 @@ function deleteReport(params) {
 
 function getDashboard(params) {
   const programId = params.programId || '';
-  const cacheKey = versionedKey('dash', programId || 'latest');
+  const cacheKey = versionedKey('dash', [SHEET_NAMES.REPORTS, SHEET_NAMES.PROGRAMS, SHEET_NAMES.BRANCHES, SHEET_NAMES.SETTINGS], programId || 'latest');
   const cached = cacheGetJSON(cacheKey);
   if (cached) {
     return { success: true, data: cached };
@@ -790,7 +866,7 @@ function getBranchReportSummary(params) {
   const branchId = params.branchId;
   const programId = params.programId;
 
-  return withCache('branchSummary', branchId + '|' + programId, () => {
+  return withCache('branchSummary', [SHEET_NAMES.REPORTS, SHEET_NAMES.PROGRAMS, SHEET_NAMES.BRANCHES], branchId + '|' + programId, () => {
     let reports = getCachedSheetObjects(SHEET_NAMES.REPORTS).map(r => ({ ...r, date: formatDateStr(r.date) }));
     reports = reports.filter(r => String(r.branchId) === String(branchId) && String(r.programId) === String(programId));
 
@@ -833,13 +909,13 @@ function getMissingBranches(params) {
   const programId = params.programId;
   const date = params.date;
 
-  return withCache('missingBranches', programId + '|' + (date || ''), () => {
+  return withCache('missingBranches', [SHEET_NAMES.REPORTS, SHEET_NAMES.BRANCHES], programId + '|' + (date || ''), () => {
     const branches = getCachedSheetObjects(SHEET_NAMES.BRANCHES);
     let reports = getCachedSheetObjects(SHEET_NAMES.REPORTS).map(r => ({ ...r, date: formatDateStr(r.date) }));
     reports = reports.filter(r => String(r.programId) === String(programId));
 
     if (date) {
-      reports = reports.filter(r => r.date === date);
+      reports = reports.filter(r => String(r.date).trim() === String(date).trim());
     }
 
     const reportedIds = new Set(reports.map(r => String(r.branchId)));
@@ -862,7 +938,7 @@ function getBranchDateReport(params) {
   const date = String(params.date || '').trim();
   const programId = params.programId;
 
-  return withCache('branchDate', [branchId, date, programId].join('|'), () => {
+  return withCache('branchDate', [SHEET_NAMES.REPORTS, SHEET_NAMES.BRANCHES, SHEET_NAMES.PROGRAMS], [branchId, date, programId].join('|'), () => {
     const branchesRaw = getCachedSheetObjects(SHEET_NAMES.BRANCHES);
     const branchRaw = branchesRaw.find(b => String(b.id) === String(branchId));
 
@@ -918,7 +994,7 @@ function getMainBranchDateReport(params) {
   const date = String(params.date || '').trim();
   const programId = params.programId;
 
-  return withCache('mainDate', [date, programId].join('|'), () => {
+  return withCache('mainDate', [SHEET_NAMES.REPORTS, SHEET_NAMES.BRANCHES, SHEET_NAMES.PROGRAMS, SHEET_NAMES.SETTINGS], [date, programId].join('|'), () => {
     const settings = getRawSettings();
     const programs = getFormattedPrograms();
     const program = programs.find(p => String(p.id) === String(programId));
@@ -961,7 +1037,7 @@ function getMainBranchDateReport(params) {
 function getMainBranchPeriodReport(params) {
   const programId = params.programId;
 
-  return withCache('mainPeriod', programId, () => {
+  return withCache('mainPeriod', [SHEET_NAMES.REPORTS, SHEET_NAMES.BRANCHES, SHEET_NAMES.PROGRAMS, SHEET_NAMES.SETTINGS], programId, () => {
     const settings = getRawSettings();
     const programs = getFormattedPrograms();
     const program = programs.find(p => String(p.id) === String(programId));

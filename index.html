@@ -1125,7 +1125,9 @@ function submitDailyEntry() {
 }
 
 function loadRecentReports() {
-  apiCall('getReports', {}).then(reports => {
+  // পুরো Reports শীট না এনে শুধু বর্তমান কর্মসূচীর রিপোর্ট আনা হয় — তালিকায় এমনিতেও
+  // সর্বশেষ ৩০টাই দেখানো হয়, তাই এতে ডাটা কম আসে এবং পেইজ দ্রুত লোড হয়
+  apiCall('getReports', { programId: STATE.activeProgramId || '' }).then(reports => {
     reports.sort((a, b) => b.date.localeCompare(a.date));
     reports = reports.slice(0, 30);
     const box = document.getElementById('recentReportsBox');
