@@ -1693,7 +1693,9 @@ function branchDatePrintHTML(data) {
 
 // শাখা ভিত্তিক — পক্ষ
 function branchPeriodPrintHTML(data) {
-  const b = data.branch, p = data.program, t = data.total;
+  const b = data.branch;
+  const p = STATE.programs.find(x => String(x.id) === String(data.program?.id)) || data.program;
+  const t = data.total;
   const header = printReportHeader(STATE.settings, [
     ['শাখা', b ? b.name : '-'],
     ['কর্মসূচী', programDisplayName(p)],
@@ -1743,7 +1745,9 @@ function mainBranchDatePrintHTML(data) {
 
 // মূল শাখা — পক্ষ
 function mainBranchPeriodPrintHTML(data) {
-  const s = data.settings || {}, p = data.program, t = data.total;
+  const s = data.settings || {};
+  const p = STATE.programs.find(x => String(x.id) === String(data.program?.id)) || data.program;
+  const t = data.total;
   const header = printReportHeader(s, [
     ['কর্মসূচী', programDisplayName(p)],
     ['সময়কাল', periodLabel(p)],
