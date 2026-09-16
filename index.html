@@ -624,6 +624,9 @@ function startApp() {
   document.getElementById('userRole').textContent = STATE.user.role === 'admin' ? 'প্রশাসক' : 'শাখা ইউজার';
   document.getElementById('userAvatar').textContent = STATE.user.role === 'admin' ? 'এ' : 'শ';
 
+  // আগের সেশনের পুরনো ড্যাশবোর্ড ক্যাশ যেন নতুন লগইনে ভুলভাবে দেখানো না হয়
+  STATE.dashboardCache = {};
+
   buildNav();
   setupGlobalProgramSelect();
   showLoading('তথ্য লোড হচ্ছে...');
@@ -1128,8 +1131,8 @@ function loadRecentReports() {
   // পুরো Reports শীট না এনে শুধু বর্তমান কর্মসূচীর রিপোর্ট আনা হয় — তালিকায় এমনিতেও
   // সর্বশেষ ৩০টাই দেখানো হয়, তাই এতে ডাটা কম আসে এবং পেইজ দ্রুত লোড হয়
   apiCall('getReports', { programId: STATE.activeProgramId || '' }).then(reports => {
-    reports.sort((a, b) => b.date.localeCompare(a.date));
-    reports = reports.slice(0, 30);
+    // শীটে যে ক্রমে (উপর থেকে নিচে) রো আছে ঠিক সেই ক্রমেই দেখানো হয় — উল্টো (নতুন আগে) সাজানো হয় না
+    reports = reports.slice(-30);
     const box = document.getElementById('recentReportsBox');
     if (!box) return;
     box.innerHTML = `
@@ -1834,9 +1837,10 @@ function submitBranchEntry() {
 }
 
 function loadMyReports() {
-  apiCall('getReports', {}).then(reports => {
-    reports.sort((a, b) => b.date.localeCompare(a.date));
-    reports = reports.slice(0, 30);
+  // পুরো Reports শীট না এনে শুধু বর্তমান কর্মসূচীর রিপোর্ট আনা হয়, এবং শীটে যে ক্রমে
+  // আছে ঠিক সেই ক্রমেই দেখানো হয় (উল্টো/নতুন-আগে সাজানো হয় না)
+  apiCall('getReports', { programId: STATE.activeProgramId || '' }).then(reports => {
+    reports = reports.slice(-30);
     const box = document.getElementById('myReportsBox');
     if (!box) return;
     box.innerHTML = `

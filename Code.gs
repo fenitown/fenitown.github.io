@@ -144,8 +144,16 @@ function ensureSheetsExist() {
     migrateProgramsYearIfNeeded(programsSh);
   }
   // তারিখ কলামগুলো Plain Text ফরম্যাটে রাখা হয় যাতে Google Sheets কখনো এগুলোকে
-  // স্বয়ংক্রিয়ভাবে Date অবজেক্টে রূপান্তর না করে (এতে ১ দিন এদিক-ওদিক দেখানোর সমস্যা হতো)
-  migrateDateColumnsToPlainTextIfNeeded(programsSh, ['startDate', 'endDate', 'extendedDate']);
+  // স্বয়ংক্রিয়ভাবে Date অবজেক্টে রূপান্তর না করে (এতে ১ দিন এদিক-ওদিক দেখানোর সমস্যা হতো)।
+  // মাইগ্রেশন সরাসরি সেল বদলায়, তাই এতে আসলেই কোনো মান বদলালে ক্যাশ-ভার্সনও বাড়িয়ে দিতে হয় —
+  // নাহলে আগে থেকে ক্যাশ হয়ে থাকা (ভুল তারিখের) বুটস্ট্র্যাপ/ড্যাশবোর্ড ৫ মিনিট পর্যন্ত পুরনো
+  // অবস্থাতেই থেকে যেত এবং রিফ্রেশ বাটন চাপার আগ পর্যন্ত ভুল তারিখ দেখাত।
+  if (migrateDateColumnsToPlainTextIfNeeded(programsSh, ['startDate', 'endDate', 'extendedDate'])) {
+    bumpVersion(SHEET_NAMES.PROGRAMS);
+  }
+  // id কলাম সরাসরি অ্যাপের ভেতরের লিংকিং-এর জন্য দরকার (এডিট/ডিলিট/ফিল্টার এর জন্য), ফরমেও
+  // নেই — তাই এটা মুছে ফেলা হয় না, শুধু চোখের আড়ালে (Hide) রাখা হয় যাতে শীট খুললে অগোছালো না লাগে
+  hideColumnsByName(programsSh, ['id']);
 
   let branchesSh = ss.getSheetByName(SHEET_NAMES.BRANCHES);
   if (!branchesSh) {
@@ -154,6 +162,7 @@ function ensureSheetsExist() {
   } else {
     migrateBranchesSheetIfNeeded(branchesSh);
   }
+  hideColumnsByName(branchesSh, ['id']);
 
   let reportsSh = ss.getSheetByName(SHEET_NAMES.REPORTS);
   if (!reportsSh) {
@@ -163,7 +172,14 @@ function ensureSheetsExist() {
     migrateReportsSheetIfNeeded(reportsSh);
     migrateReportsGroupCountIfNeeded(reportsSh);
   }
-  migrateDateColumnsToPlainTextIfNeeded(reportsSh, ['date']);
+  if (migrateDateColumnsToPlainTextIfNeeded(reportsSh, ['date'])) {
+    bumpVersion(SHEET_NAMES.REPORTS);
+  }
+  // id/programId/branchId — এই ৩টা কলাম অ্যাপের ভেতরের লিংকিং-এর জন্য দরকার (কোন রিপোর্ট কোন
+  // কর্মসূচী/শাখার, এবং এডিট-ডিলিটের জন্য টার্গেট রো খুঁজে বের করা) — ফরমে এগুলো টাইপ করতে হয় না,
+  // branchName দেখেই মানুষ শাখা বোঝে, তাই এই টেকনিক্যাল কলামগুলো Hide করে দেওয়া হলো (ডাটা মুছে ফেলা হয়নি,
+  // শুধু চোখের আড়ালে)।
+  hideColumnsByName(reportsSh, ['id', 'programId', 'branchId']);
 
   if (!ss.getSheetByName(SHEET_NAMES.USERS)) {
     const sh = ss.insertSheet(SHEET_NAMES.USERS);
@@ -171,6 +187,19 @@ function ensureSheetsExist() {
     // ডিফল্ট এডমিন
     sh.appendRow(['admin', 'admin123', 'admin', '']);
   }
+}
+
+// হেডার-নাম দিয়ে একটা কলাম খুঁজে সেটা Hide করে দেয় (মুছে ফেলে না, শুধু লুকিয়ে রাখে) —
+// একাধিকবার চললেও সমস্যা নেই, আগে থেকে Hide করা কলাম আবার Hide করলে কিছু হয় না
+function hideColumnsByName(sh, columnNames) {
+  const lastCol = sh.getLastColumn();
+  if (lastCol < 1) return;
+  const headers = sh.getRange(1, 1, 1, lastCol).getValues()[0];
+  columnNames.forEach(colName => {
+    const idx = headers.indexOf(colName); // 0-indexed
+    if (idx === -1) return;
+    try { sh.hideColumns(idx + 1); } catch (e) { /* হাইড করতে ব্যর্থ হলেও অ্যাপ চলবে */ }
+  });
 }
 
 // পুরনো Branches শীটে (id, name, createdAt) নতুন ৩টি কলাম (totalRukon, totalKormi, totalUnit) যোগ করে দেয়
@@ -275,8 +304,9 @@ function migrateReportsGroupCountIfNeeded(sh) {
 // আগে থেকেই প্লেইন টেক্সট থাকা সেলগুলো স্পর্শ করা হয় না, তাই বারবার চললেও সমস্যা নেই।
 function migrateDateColumnsToPlainTextIfNeeded(sh, columnNames) {
   const lastCol = sh.getLastColumn();
-  if (lastCol < 1) return;
+  if (lastCol < 1) return false;
   const headers = sh.getRange(1, 1, 1, lastCol).getValues()[0];
+  let anyChanged = false;
 
   columnNames.forEach(colName => {
     const idx = headers.indexOf(colName); // 0-indexed
@@ -298,7 +328,10 @@ function migrateDateColumnsToPlainTextIfNeeded(sh, columnNames) {
         return [v];
       });
       range.setNumberFormat('@'); // ফরম্যাট আগে বদলাতে হয়, নাহলে setValues আবার Date বানিয়ে ফেলবে
-      if (changed) range.setValues(fixed);
+      if (changed) {
+        range.setValues(fixed);
+        anyChanged = true;
+      }
     }
 
     // নিচের ফাঁকা রো-গুলোও প্লেইন টেক্সট রাখা হলো, যাতে ভবিষ্যতে নতুন এন্ট্রিও Date-এ রূপান্তরিত না হয়
@@ -307,6 +340,8 @@ function migrateDateColumnsToPlainTextIfNeeded(sh, columnNames) {
       sh.getRange(lastRow + 1, col, maxRows - lastRow, 1).setNumberFormat('@');
     }
   });
+
+  return anyChanged;
 }
 
 // ==================== হেল্পার ====================
