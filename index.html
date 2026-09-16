@@ -275,7 +275,8 @@ input,select{font-family:inherit;}
 .section-header .eyebrow{font-size:11.5px;font-weight:700;letter-spacing:.05em;color:var(--teal-500);text-transform:uppercase;display:block;margin-bottom:2px;}
 
 .panel{
-  background:var(--white); box-shadow:var(--shadow-sm);padding:20px;margin-bottom:20px;
+  background:var(--white);border:1px solid var(--sand-line);border-radius:var(--radius);
+  box-shadow:var(--shadow-sm);padding:22px;margin-bottom:20px;
 }
 .info-header{
   background:linear-gradient(120deg,var(--teal-800),var(--teal-600));
@@ -291,11 +292,10 @@ input,select{font-family:inherit;}
 table.data-table{width:100%;border-collapse:collapse;font-size:14px;}
 table.data-table thead th{
   background:var(--teal-50);color:var(--teal-800);text-align:right;padding:11px 12px;
-  font-weight:700;font-size:12.5px;border-bottom:2px solid var(--teal-200,#bcecdf);white-space:nowrap;
+  font-weight:700;font-size:12.5px;border:1px solid var(--sand-line);white-space:nowrap;
 }
-table.data-table tbody td{padding:11px 12px;border-bottom:1px solid var(--sand-line);color:var(--ink);}
+table.data-table tbody td{padding:11px 12px;border:1px solid var(--sand-line);color:var(--ink);}
 table.data-table tbody tr:hover{background:var(--teal-50);}
-table.data-table tbody tr:last-child td{border-bottom:none;}
 .table-scroll{overflow-x:auto;border-radius:10px;border:1px solid var(--sand-line);}
 .table-scroll table{border:none;}
 
@@ -1046,7 +1046,7 @@ function reportEntryFieldsHTML(prefix) {
 }
 
 // শাখা সিলেক্ট করলে মোট রুকন/কর্মী/ইউনিট অটো বসিয়ে দেয় (শাখা প্রোফাইল থেকে)
-function wireBranchAutoFill(branchSelectId, prefix) {
+function wireBranchAutoFill(branchSelectId, prefix, onAfterChange) {
   const sel = document.getElementById(branchSelectId);
   if (!sel) return;
   sel.onchange = () => {
@@ -1054,6 +1054,7 @@ function wireBranchAutoFill(branchSelectId, prefix) {
     document.getElementById(prefix + 'RukonTotal').value = branch ? (branch.totalRukon || 0) : 0;
     document.getElementById(prefix + 'KormiTotal').value = branch ? (branch.totalKormi || 0) : 0;
     document.getElementById(prefix + 'UnitTotal').value = branch ? (branch.totalUnit || 0) : 0;
+    if (typeof onAfterChange === 'function') onAfterChange();
   };
 }
 
@@ -1072,9 +1073,10 @@ function getReportEntryPayload(prefix) {
    রিপোর্ট এন্ট্রি (এডমিন)
 ==================================================================== */
 function renderDailyEntry() {
+  STATE.editingReportId = null; // পেইজে ফিরে এলে আগের এডিট-মোড যেন লেগে না থাকে
   el(`
     <div class="panel">
-      <div class="section-header" style="margin-top:0;"><h3>রিপোর্ট যোগ করুন</h3></div>
+      <div class="section-header" style="margin-top:0;"><h3 id="deFormTitle">রিপোর্ট যোগ করুন</h3></div>
       <div class="form-grid">
         <div class="field">
           <label>তারিখ</label>
@@ -1096,7 +1098,8 @@ function renderDailyEntry() {
       ${reportEntryFieldsHTML('de')}
 
       <div class="form-actions">
-        <button class="btn btn-primary" onclick="submitDailyEntry()">রিপোর্ট সংরক্ষণ করুন</button>
+        <button class="btn btn-primary" id="deSubmitBtn" onclick="submitDailyEntry()">রিপোর্ট সংরক্ষণ করুন</button>
+        <button class="btn btn-secondary" id="deCancelEditBtn" style="display:none;" onclick="cancelEditReport('de')">বাতিল করুন</button>
       </div>
     </div>
 
@@ -1118,20 +1121,70 @@ function submitDailyEntry() {
     programId,
     branchIds: JSON.stringify([branchId])
   }, getReportEntryPayload('de'));
+  if (STATE.editingReportId) payload.id = STATE.editingReportId;
 
-  showLoading('সংরক্ষণ হচ্ছে...');
+  showLoading(STATE.editingReportId ? 'আপডেট হচ্ছে...' : 'সংরক্ষণ হচ্ছে...');
   apiCall('saveReport', payload)
-    .then(() => { STATE.dashboardCache = {}; toast('রিপোর্ট সফলভাবে সংরক্ষণ হয়েছে'); renderDailyEntry(); })
+    .then(() => {
+      STATE.dashboardCache = {};
+      toast(STATE.editingReportId ? 'রিপোর্ট আপডেট হয়েছে' : 'রিপোর্ট সফলভাবে সংরক্ষণ হয়েছে');
+      renderDailyEntry();
+    })
     .catch(err => toast(err, true))
     .finally(hideLoading);
+}
+
+// এডিট/বাতিল বাটনের জন্য ফর্মের শিরোনাম ও বাটনের লেখা বদলে দেয়
+function setEntryFormEditMode(prefix, isEdit) {
+  const titleEl = document.getElementById(prefix + 'FormTitle');
+  const submitBtn = document.getElementById(prefix + 'SubmitBtn');
+  const cancelBtn = document.getElementById(prefix + 'CancelEditBtn');
+  if (titleEl) titleEl.textContent = isEdit ? 'রিপোর্ট এডিট করুন' : 'রিপোর্ট যোগ করুন';
+  if (submitBtn) submitBtn.textContent = isEdit ? 'রিপোর্ট আপডেট করুন' : 'রিপোর্ট সংরক্ষণ করুন';
+  if (cancelBtn) cancelBtn.style.display = isEdit ? 'inline-flex' : 'none';
+}
+
+// রিপোর্ট তালিকার "এডিট" বাটনে ক্লিক করলে ফর্মে আগের মান বসিয়ে দেয়
+function editReport(prefix, id) {
+  const r = STATE.reportsById && STATE.reportsById[id];
+  if (!r) return;
+  STATE.editingReportId = id;
+  document.getElementById(prefix + 'Date').value = r.date;
+  document.getElementById(prefix + 'Program').value = r.programId;
+  const branchSel = document.getElementById(prefix + 'Branch');
+  branchSel.value = r.branchId;
+  branchSel.dispatchEvent(new Event('change'));
+  document.getElementById(prefix + 'RukonParticipated').value = r.rukonParticipated;
+  document.getElementById(prefix + 'KormiParticipated').value = r.kormiParticipated;
+  document.getElementById(prefix + 'UnitParticipated').value = r.unitParticipated;
+  document.getElementById(prefix + 'Group').value = r.groupCount;
+  document.getElementById(prefix + 'Dawat').value = r.dawatCount;
+  document.getElementById(prefix + 'Shohojogi').value = r.shohojogiCount;
+  setEntryFormEditMode(prefix, true);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function cancelEditReport(prefix) {
+  STATE.editingReportId = null;
+  document.getElementById(prefix + 'Date').value = todayISO();
+  const branchSel = document.getElementById(prefix + 'Branch');
+  branchSel.value = '';
+  branchSel.dispatchEvent(new Event('change'));
+  ['RukonParticipated', 'KormiParticipated', 'UnitParticipated', 'Group', 'Dawat', 'Shohojogi'].forEach(f => {
+    document.getElementById(prefix + f).value = 0;
+  });
+  setEntryFormEditMode(prefix, false);
 }
 
 function loadRecentReports() {
   // পুরো Reports শীট না এনে শুধু বর্তমান কর্মসূচীর রিপোর্ট আনা হয় — তালিকায় এমনিতেও
   // সর্বশেষ ৩০টাই দেখানো হয়, তাই এতে ডাটা কম আসে এবং পেইজ দ্রুত লোড হয়
   apiCall('getReports', { programId: STATE.activeProgramId || '' }).then(reports => {
-    // শীটে যে ক্রমে (উপর থেকে নিচে) রো আছে ঠিক সেই ক্রমেই দেখানো হয় — উল্টো (নতুন আগে) সাজানো হয় না
+    // সার্ভার সবসময় তারিখ অনুযায়ী সঠিক ক্রমে (১,২,৩...) দিয়ে থাকে, শীটে রো এলোমেলো থাকলেও —
+    // তাই এখানে আর আলাদা করে সাজাতে হয় না, শুধু সর্বশেষ ৩০টা নেওয়া হয়
     reports = reports.slice(-30);
+    STATE.reportsById = STATE.reportsById || {};
+    reports.forEach(r => { STATE.reportsById[r.id] = r; });
     const box = document.getElementById('recentReportsBox');
     if (!box) return;
     box.innerHTML = `
@@ -1142,7 +1195,10 @@ function loadRecentReports() {
             <tr>
               <td>${fmtBnDate(r.date)}</td><td class="branch-col">${esc(r.branchName)}</td><td>${fmtNum(r.rukonParticipated)}</td>
               <td>${fmtNum(r.kormiParticipated)}</td><td>${fmtNum(r.unitParticipated)}</td><td>${fmtNum(r.groupCount)}</td><td>${fmtNum(r.dawatCount)}</td><td>${fmtNum(r.shohojogiCount)}</td>
-              <td><button class="btn btn-danger btn-sm" onclick="deleteReportRow('${r.id}')">মুছুন</button></td>
+              <td style="white-space:nowrap;">
+                <button class="btn btn-secondary btn-sm" onclick="editReport('de','${r.id}')">এডিট</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteReportRow('${r.id}')">মুছুন</button>
+              </td>
             </tr>
           `).join('') : `<tr><td colspan="9" style="text-align:center;padding:22px;color:var(--ink-soft);">কোনো রিপোর্ট নেই</td></tr>`}
         </tbody>
@@ -1781,9 +1837,10 @@ function mainBranchPeriodPrintHTML(data) {
    শাখা ইউজার: দৈনিক রিপোর্ট এন্ট্রি
 ==================================================================== */
 function renderBranchEntry() {
+  STATE.editingReportId = null; // পেইজে ফিরে এলে আগের এডিট-মোড যেন লেগে না থাকে
   el(`
     <div class="panel">
-      <div class="section-header" style="margin-top:0;"><h3>রিপোর্ট এন্ট্রি</h3></div>
+      <div class="section-header" style="margin-top:0;"><h3 id="beFormTitle">রিপোর্ট এন্ট্রি</h3></div>
       <div class="form-grid">
         <div class="field">
           <label>তারিখ</label>
@@ -1805,15 +1862,15 @@ function renderBranchEntry() {
       ${reportEntryFieldsHTML('be')}
 
       <div class="form-actions">
-        <button class="btn btn-primary" onclick="submitBranchEntry()">রিপোর্ট সংরক্ষণ করুন</button>
+        <button class="btn btn-primary" id="beSubmitBtn" onclick="submitBranchEntry()">রিপোর্ট সংরক্ষণ করুন</button>
+        <button class="btn btn-secondary" id="beCancelEditBtn" style="display:none;" onclick="cancelEditReport('be')">বাতিল করুন</button>
       </div>
     </div>
 
     <div class="section-header"><h3>আমার সাম্প্রতিক রিপোর্টসমূহ</h3></div>
-    <div id="myReportsBox" class="table-scroll"><div class="empty-state"><p>লোড হচ্ছে...</p></div></div>
+    <div id="myReportsBox" class="table-scroll"><div class="empty-state"><p>উপরে থেকে শাখা নির্বাচন করুন</p></div></div>
   `);
-  wireBranchAutoFill('beBranch', 'be');
-  loadMyReports();
+  wireBranchAutoFill('beBranch', 'be', loadMyReports);
 }
 
 function submitBranchEntry() {
@@ -1827,28 +1884,43 @@ function submitBranchEntry() {
     programId,
     branchIds: JSON.stringify([branchId])
   }, getReportEntryPayload('be'));
+  if (STATE.editingReportId) payload.id = STATE.editingReportId;
 
-  showLoading('সংরক্ষণ হচ্ছে...');
+  showLoading(STATE.editingReportId ? 'আপডেট হচ্ছে...' : 'সংরক্ষণ হচ্ছে...');
   apiCall('saveReport', payload)
-    .then(() => { STATE.dashboardCache = {}; toast('রিপোর্ট সফলভাবে সংরক্ষণ হয়েছে'); renderBranchEntry(); })
+    .then(() => {
+      STATE.dashboardCache = {};
+      toast(STATE.editingReportId ? 'রিপোর্ট আপডেট হয়েছে' : 'রিপোর্ট সফলভাবে সংরক্ষণ হয়েছে');
+      renderBranchEntry();
+    })
     .catch(err => toast(err, true))
     .finally(hideLoading);
 }
 
+// শাখা শুধু নিজের শাখা নির্বাচন করে সেই শাখার রিপোর্টই দেখতে/এডিট করতে পারবে — অন্য শাখার
+// ডাটা এখানে দেখানো হয় না
 function loadMyReports() {
-  // পুরো Reports শীট না এনে শুধু বর্তমান কর্মসূচীর রিপোর্ট আনা হয়, এবং শীটে যে ক্রমে
-  // আছে ঠিক সেই ক্রমেই দেখানো হয় (উল্টো/নতুন-আগে সাজানো হয় না)
-  apiCall('getReports', { programId: STATE.activeProgramId || '' }).then(reports => {
+  const branchId = document.getElementById('beBranch') ? document.getElementById('beBranch').value : '';
+  const box = document.getElementById('myReportsBox');
+  if (!box) return;
+  if (!branchId) {
+    box.innerHTML = `<div class="empty-state"><p>উপরে থেকে শাখা নির্বাচন করুন</p></div>`;
+    return;
+  }
+  apiCall('getReports', { programId: STATE.activeProgramId || '', branchId }).then(reports => {
     reports = reports.slice(-30);
-    const box = document.getElementById('myReportsBox');
-    if (!box) return;
+    STATE.reportsById = STATE.reportsById || {};
+    reports.forEach(r => { STATE.reportsById[r.id] = r; });
     box.innerHTML = `
       <table class="data-table recent-reports-table">
-        <thead><tr><th>তারিখ</th><th>শাখা</th><th>রুকন</th><th>কর্মী</th><th>ইউনিট</th><th>গ্রুপ</th><th>দাওয়াত</th><th>সহযোগী</th></tr></thead>
+        <thead><tr><th>তারিখ</th><th>শাখা</th><th>রুকন</th><th>কর্মী</th><th>ইউনিট</th><th>গ্রুপ</th><th>দাওয়াত</th><th>সহযোগী</th><th></th></tr></thead>
         <tbody>
           ${reports.length ? reports.map(r => `
-            <tr><td>${fmtBnDate(r.date)}</td><td class="branch-col">${esc(r.branchName)}</td><td>${fmtNum(r.rukonParticipated)}</td><td>${fmtNum(r.kormiParticipated)}</td><td>${fmtNum(r.unitParticipated)}</td><td>${fmtNum(r.groupCount)}</td><td>${fmtNum(r.dawatCount)}</td><td>${fmtNum(r.shohojogiCount)}</td></tr>
-          `).join('') : `<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--ink-soft);">কোনো রিপোর্ট নেই</td></tr>`}
+            <tr>
+              <td>${fmtBnDate(r.date)}</td><td class="branch-col">${esc(r.branchName)}</td><td>${fmtNum(r.rukonParticipated)}</td><td>${fmtNum(r.kormiParticipated)}</td><td>${fmtNum(r.unitParticipated)}</td><td>${fmtNum(r.groupCount)}</td><td>${fmtNum(r.dawatCount)}</td><td>${fmtNum(r.shohojogiCount)}</td>
+              <td><button class="btn btn-secondary btn-sm" onclick="editReport('be','${r.id}')">এডিট</button></td>
+            </tr>
+          `).join('') : `<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--ink-soft);">এই শাখার কোনো রিপোর্ট নেই</td></tr>`}
         </tbody>
       </table>`;
   }).catch(err => toast(err, true));

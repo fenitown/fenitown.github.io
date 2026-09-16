@@ -325,6 +325,15 @@ function migrateDateColumnsToPlainTextIfNeeded(sh, columnNames) {
           changed = true;
           return [formatDateStr(v)];
         }
+        // ইতিমধ্যে সঠিক yyyy-MM-dd স্ট্রিং না হলে (যেমন হাতে "31-08-2026" আকারে টাইপ করা থাকলে)
+        // formatDateStr দিয়ে ঠিক করে সেভ করে রাখা হয়, যাতে সাজানো/তুলনা করার সময় ভুল না হয়
+        if (v !== '' && v !== null && v !== undefined && !/^\d{4}-\d{2}-\d{2}$/.test(String(v).trim())) {
+          const normalized = formatDateStr(v);
+          if (normalized && normalized !== v) {
+            changed = true;
+            return [normalized];
+          }
+        }
         return [v];
       });
       range.setNumberFormat('@'); // ফরম্যাট আগে বদলাতে হয়, নাহলে setValues আবার Date বানিয়ে ফেলবে
@@ -418,7 +427,7 @@ function formatDateStr(d) {
 
   const s = String(d).trim();
 
-  // আগে থেকেই সঠিক ISO date হলে 그대로 ফেরত দিন
+  // আগে থেকেই সঠিক ISO date হলে যেমন আছে তেমনই ফেরত দিন
   if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
     return s;
   }
@@ -431,6 +440,18 @@ function formatDateStr(d) {
       m[1],
       String(m[2]).padStart(2, '0'),
       String(m[3]).padStart(2, '0')
+    ].join('-');
+  }
+
+  // dd-MM-yyyy বা dd/MM/yyyy ধরনের string (বাংলাদেশে প্রায়ই এভাবে হাতে টাইপ করা হয়,
+  // যেমন "31-08-2026")। এটা আগে ধরা না পড়লে "31" সংখ্যাটা তারিখ হিসেবে বোঝা যেত না,
+  // ফলে সিরিয়াল/সাজানোর সময় এলোমেলো জায়গায় (যেমন ১ তারিখের আগে) চলে যেত।
+  const m2 = s.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
+  if (m2) {
+    return [
+      m2[3],
+      String(m2[2]).padStart(2, '0'),
+      String(m2[1]).padStart(2, '0')
     ].join('-');
   }
 
@@ -765,6 +786,14 @@ function getReports(params) {
       reports = reports.filter(r => r.date <= params.toDate);
     }
 
+    // শীটে রো যে ক্রমেই থাকুক (এলোমেলো হলেও), ওয়েবসাইটে সবসময় তারিখ অনুযায়ী সঠিক
+    // ক্রমেই (১,২,৩...) দেখানো হয়। একই তারিখের একাধিক এন্ট্রি থাকলে সেগুলো কোন আগে
+    // সাবমিট হয়েছে (createdAt) সেই ক্রমে দেখানো হয়।
+    reports.sort((a, b) => {
+      if (a.date !== b.date) return a.date < b.date ? -1 : 1;
+      return String(a.createdAt).localeCompare(String(b.createdAt));
+    });
+
     return reports;
   });
 }
@@ -774,6 +803,7 @@ function saveReport(params) {
 
   const branches = getCachedSheetObjects(SHEET_NAMES.BRANCHES);
   const branchIds = JSON.parse(params.branchIds || '[]');
+  const existingReports = getCachedSheetObjects(SHEET_NAMES.REPORTS);
 
   const rukonParticipated = Number(params.rukonParticipated) || 0;
   const kormiParticipated = Number(params.kormiParticipated) || 0;
@@ -781,6 +811,66 @@ function saveReport(params) {
   const groupCount = Number(params.groupCount) || 0;
   const dawatCount = Number(params.dawatCount) || 0;
   const shohojogiCount = Number(params.shohojogiCount) || 0;
+
+  // ===== এডিট মোড: params.id দেওয়া থাকলে নতুন রো না বানিয়ে পুরনো রিপোর্টটাই আপডেট করা হয় =====
+  if (params.id) {
+    const rowIdx = findRowIndexById(SHEET_NAMES.REPORTS, params.id);
+    if (rowIdx === -1) return { success: false, message: 'রিপোর্ট পাওয়া যায়নি' };
+
+    const branchId = branchIds[0];
+    const branch = branches.find(b => String(b.id) === String(branchId));
+
+    const dup = existingReports.find(r =>
+      String(r.id) !== String(params.id) &&
+      String(r.programId) === String(params.programId) &&
+      String(r.branchId) === String(branchId) &&
+      formatDateStr(r.date) === params.date
+    );
+    if (dup) {
+      return {
+        success: false,
+        message: (branch ? branch.name : 'এই শাখার') + ' জন্য এই তারিখে ইতিমধ্যে আরেকটি রিপোর্ট আছে — একই শাখার একই দিনে দুটি রিপোর্ট রাখা যাবে না'
+      };
+    }
+
+    const lastCol = sh.getLastColumn();
+    const headers = sh.getRange(1, 1, 1, lastCol).getValues()[0];
+    const rowRange = sh.getRange(rowIdx, 1, 1, lastCol);
+    const rowValues = rowRange.getValues()[0]; // id, createdAt ইত্যাদি অপরিবর্তিত রাখতে আগে থেকে লোড করা হলো
+
+    const updates = {
+      date: params.date,
+      programId: params.programId,
+      branchId: branchId,
+      branchName: branch ? branch.name : '',
+      rukonParticipated, kormiParticipated, unitParticipated,
+      groupCount, dawatCount, shohojogiCount
+    };
+    headers.forEach((h, i) => {
+      if (Object.prototype.hasOwnProperty.call(updates, h)) rowValues[i] = updates[h];
+    });
+    rowRange.setValues([rowValues]);
+
+    bumpVersion(SHEET_NAMES.REPORTS);
+    return { success: true, message: 'রিপোর্ট আপডেট হয়েছে', data: { ids: [params.id] } };
+  }
+
+  // ===== নতুন এন্ট্রি (একই সাথে একাধিক শাখার জন্যও হতে পারে) =====
+  // একই তারিখ + একই শাখা + একই কর্মসূচীতে আগে থেকে রিপোর্ট থাকলে ডাবল এন্ট্রি আটকানো হয়
+  const dupBranchId = branchIds.find(branchId =>
+    existingReports.some(r =>
+      String(r.programId) === String(params.programId) &&
+      String(r.branchId) === String(branchId) &&
+      formatDateStr(r.date) === params.date
+    )
+  );
+  if (dupBranchId) {
+    const branch = branches.find(b => String(b.id) === String(dupBranchId));
+    return {
+      success: false,
+      message: (branch ? branch.name : 'এই শাখার') + ' জন্য এই তারিখে রিপোর্ট আগে থেকেই জমা আছে — নতুন করে যোগ না করে সেটা এডিট করুন'
+    };
+  }
 
   const results = [];
   branchIds.forEach(branchId => {
