@@ -1773,12 +1773,12 @@ function branchPeriodPrintHTML(data) {
       ${header}
       <div class="table-scroll">
         <table class="data-table report-print-table">
-          <thead><tr><th>তারিখ</th><th>রুকন</th><th>কর্মী</th><th>ইউনিট</th><th>গ্রুপ</th><th>দাওয়াত</th><th>সহযোগী</th></tr></thead>
+          <thead><tr><th>তারিখ</th><th>মোট রুকন</th><th>অংশগ্রহণ</th><th>মোট কর্মী</th><th>অংশগ্রহণ</th><th>মোট ইউনিট</th><th>অংশগ্রহণ</th><th>গ্রুপ</th><th>দাওয়াত</th><th>সহযোগী</th></tr></thead>
           <tbody>
             ${data.daily.length ? data.daily.map(d => `
-              <tr><td>${fmtBnDate(d.date)}</td><td>${fmtNum(d.rukonParticipated)}</td><td>${fmtNum(d.kormiParticipated)}</td><td>${fmtNum(d.unitParticipated)}</td><td>${fmtNum(d.groupCount)}</td><td>${fmtNum(d.dawatCount)}</td><td>${fmtNum(d.shohojogiCount)}</td></tr>
-            `).join('') : `<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--ink-soft);">কোনো রিপোর্ট নেই</td></tr>`}
-            <tr class="total-row"><td>সর্বমোট</td><td>${fmtNum(t.totalRukon)}</td><td>${fmtNum(t.totalKormi)}</td><td>${fmtNum(t.totalUnit)}</td><td>${fmtNum(t.totalGroup)}</td><td>${fmtNum(t.totalDawat)}</td><td>${fmtNum(t.totalShohojogi)}</td></tr>
+              <tr><td>${fmtBnDate(d.date)}</td><td>${fmtNum(b ? b.totalRukon : 0)}</td><td>${fmtNum(d.rukonParticipated)}</td><td>${fmtNum(b ? b.totalKormi : 0)}</td><td>${fmtNum(d.kormiParticipated)}</td><td>${fmtNum(b ? b.totalUnit : 0)}</td><td>${fmtNum(d.unitParticipated)}</td><td>${fmtNum(d.groupCount)}</td><td>${fmtNum(d.dawatCount)}</td><td>${fmtNum(d.shohojogiCount)}</td></tr>
+            `).join('') : `<tr><td colspan="10" style="text-align:center;padding:20px;color:var(--ink-soft);">কোনো রিপোর্ট নেই</td></tr>`}
+            <tr class="total-row"><td>সর্বমোট</td><td>${fmtNum(b ? b.totalRukon : 0)}</td><td>${fmtNum(t.totalRukon)}</td><td>${fmtNum(b ? b.totalKormi : 0)}</td><td>${fmtNum(t.totalKormi)}</td><td>${fmtNum(b ? b.totalUnit : 0)}</td><td>${fmtNum(t.totalUnit)}</td><td>${fmtNum(t.totalGroup)}</td><td>${fmtNum(t.totalDawat)}</td><td>${fmtNum(t.totalShohojogi)}</td></tr>
           </tbody>
         </table>
       </div>
