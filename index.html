@@ -1678,11 +1678,14 @@ function loadAdminReport() {
 
 /* ---------- প্রিন্ট রিপোর্ট HTML বিল্ডার ---------- */
 
-function printReportHeader(s, metaPairs) {
+// titleOverride/addrOverride থাকলে সেগুলো ব্যবহার হবে (শাখা ভিত্তিক প্রিন্টে: হেডারে শাখার নাম, ঠিকানার জায়গায় মূল শাখার নাম)
+function printReportHeader(s, metaPairs, titleOverride, addrOverride) {
+  const title = titleOverride || s.mainBranchName || 'মূল শাখা';
+  const addr = addrOverride !== undefined ? addrOverride : s.mainBranchAddress;
   return `
     <div class="print-report-header">
-      <h2>${esc(s.mainBranchName || 'মূল শাখা')}</h2>
-      ${s.mainBranchAddress ? `<p class="addr">${esc(s.mainBranchAddress)}</p>` : ''}
+      <h2>${esc(title)}</h2>
+      ${addr ? `<p class="addr">${esc(addr)}</p>` : ''}
     </div>
     <div class="print-report-meta">
       ${metaPairs.map(([k, v]) => `<div><b>${esc(k)}:</b> ${esc(v)}</div>`).join('')}
@@ -1723,11 +1726,11 @@ function notReportedPrintHTML(data, programId, date) {
 // শাখা ভিত্তিক — দৈনিক
 function branchDatePrintHTML(data) {
   const b = data.branch, p = data.program, t = data.totals;
-  const header = printReportHeader(STATE.settings, [
-    ['শাখা', b ? b.name : '-'],
+  const s = STATE.settings;
+  const header = printReportHeader(s, [
     ['কর্মসূচী', programDisplayName(p)],
     ['রিপোর্ট তারিখ', fmtBnDate(data.date)]
-  ]);
+  ], b ? b.name : (s.mainBranchName || 'মূল শাখা'), s.mainBranchName || '');
   return `
     <div class="panel">
       ${header}
@@ -1759,12 +1762,12 @@ function branchPeriodPrintHTML(data) {
   const b = data.branch;
   const p = STATE.programs.find(x => String(x.id) === String(data.program?.id)) || data.program;
   const t = data.total;
-  const header = printReportHeader(STATE.settings, [
-    ['শাখা', b ? b.name : '-'],
+  const s = STATE.settings;
+  const header = printReportHeader(s, [
     ['কর্মসূচী', programDisplayName(p)],
     ['সময়কাল', periodLabel(p)],
     ['মোট দিন', p ? fmtNum(p.totalDays) : '-']
-  ]);
+  ], b ? b.name : (s.mainBranchName || 'মূল শাখা'), s.mainBranchName || '');
   return `
     <div class="panel">
       ${header}
